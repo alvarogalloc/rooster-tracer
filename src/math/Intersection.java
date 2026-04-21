@@ -1,4 +1,5 @@
-
+package math;
+import objects.Object3D;
 public class Intersection {
     private Object3D obj;
     private float t;
@@ -13,6 +14,4 @@ public class Intersection {
         return t;
     }
 
-
-    
 }
