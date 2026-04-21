@@ -5,6 +5,10 @@ import java.util.Optional;
 
 import javax.imageio.ImageIO;
 
+import math.Intersection;
+import math.Ray;
+import objects.Object3D;
+
 public class Raytracer {
   private RaytracerContext context;
 

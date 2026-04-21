@@ -1,4 +1,5 @@
 
+package math;
 
 public class Vector3D {
     private float x;

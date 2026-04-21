@@ -1,6 +1,9 @@
+package scene;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import objects.Object3D;
 
 public class Scene {
   private List<Object3D> objects;
