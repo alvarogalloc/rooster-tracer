@@ -7,11 +7,16 @@ export using u8 = std::uint8_t;
 
 export namespace cg {
 struct color_rgb : vec3 {
-  using rgba255 = std::tuple<u8, u8, u8>;
+  using rgb255 = std::tuple<u8, u8, u8>;
   auto to_rgb_255() const {
     const float limit = 255.99f;
-    const auto [r, g, b] = (*this) * limit;
-    return rgba255{u8(r), u8(g), u8(b)};
+
+    // 3. Clamp values to prevent integer overflow on bright pixels
+    float r = std::clamp(x, 0.0f, 1.0f);
+    float g = std::clamp(y, 0.0f, 1.0f);
+    float b = std::clamp(z, 0.0f, 1.0f);
+
+    return rgb255{u8(r * limit), u8(g * limit), u8(b * limit)};
   }
   auto print() const {
     auto [r, g, b] = to_rgb_255();
