@@ -5,6 +5,7 @@ import raytracer;
 import sphere;
 import vec3;
 import camera;
+import triangle;
 int main() {
   using namespace cg;
   auto cam = camera{
@@ -24,12 +25,17 @@ int main() {
       .bg_color = color_rgb{1, 1, 1},
       .image = std::vector<color_rgb>(cam.width * cam.height),
       .maxDepth = 5}};
-  rt.ctx.scene.objects.push_back(std::make_unique<sphere>(1.f,
-                                                          vec3{
-                                                              0,
-                                                              0,
-                                                              2,
-                                                          },
-                                                          color_rgb{0, 0, 0.5}));
+  rt.ctx.scene.objects.push_back(
+      std::make_unique<sphere>(1.f,
+                               vec3{
+                                   0,
+                                   0,
+                                   2,
+                               },
+                               color_rgb{0, 0, 0.5}));
+  rt.ctx.scene.objects.push_back(
+      std::make_unique<triangle>(vec3{-1.f, -1.f, -2.f}, vec3{1.f, -1.f, -2.f},
+                                 vec3{0.f, 1.f, -2.f}, color_rgb{0, 0.5, 0}));
+
   rt.run("outimage.png");
 }

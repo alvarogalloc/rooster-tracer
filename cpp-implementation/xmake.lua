@@ -1,12 +1,12 @@
 add_rules("mode.debug", "mode.release")
-add_requires("stb")
+add_requires("stb", "glm")
 
 target("cpp-raytracer")
     set_kind("binary")
     set_languages("c++latest")
     add_files("src/*.cpp")
     add_files("src/*.cppm")
-    add_packages("stb")
+    add_packages("stb", "glm")
 
 --
 -- If you want to known more usage about xmake, please see https://xmake.io

@@ -38,7 +38,7 @@ struct raytracer {
     for (const color_rgb &c : ctx.image) {
       auto [r, g, b] = c.to_rgb_255();
       pixels.push_back(r);
-      pixels.push_back(b);
+      pixels.push_back(g);
       pixels.push_back(b);
     }
 
