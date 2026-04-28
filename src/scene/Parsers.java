@@ -3,9 +3,9 @@ package scene;
 
 import java.util.Map;
 import java.util.Optional;
-
 import objects.Object3D;
 import scene.parsers.SphereParser;
+import scene.parsers.TriangleParser;
 
 /**
  * Parsers
@@ -17,5 +17,6 @@ public class Parsers {
     Optional<Object3D> parse(String[] tokens);
   }
 
-  public static Map<String, Parser> parsers = Map.of("sphere", SphereParser::parseSphere);
+  public static Map<String, Parser> parsers = Map.of("sphere", SphereParser::parseSphere,"triangle", TriangleParser::parseTriangle
+  );
 }

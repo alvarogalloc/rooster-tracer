@@ -4,10 +4,40 @@ ROOSTERSCENEV1
 # A red sphere right in front of the camera
 #sphere 0 0 -2 1.0 255 0 0
 # not shown because it's inside the first sphere
-sphere 0 0 -2 0.7 0 0 0
+#sphere 0 0 -2 0.7 0 0 0
 
 # A blue sphere slightly off to the left and further back
-sphere -1.5 0 -3 1.0 0 0 255
+#sphere -1.5 0 -3 1.0 0 0 255
 
 # A green sphere to the right
-sphere 1.5 0 -3 0.5 0 255 0
+#sphere 1.5 0 -3 0.5 0 255 0
+
+# 1. A giant grey "floor" triangle sitting beneath the spheres
+# Vertices: Left-back, Right-back, Front-center (y = -1.0)
+triangle -10 -1 -10  10 -1 -10  0 -1 2  150 150 150
+
+# 2. A floating yellow triangle in the background 
+# Vertices: Behind the blue sphere, tilted slightly
+triangle -2 2 -5  -1 3 -5  -3 3 -5  255 255 0
+
+
+# --- A Background Pyramid (4 Triangles) ---
+# Tip: (0, 3, -7)
+# Base center: (0, -1, -7)
+# Face 1 (Front): Tip to (-2, -1, -6) and (2, -1, -6)
+triangle 0 3 -7  -2 -1 -6  2 -1 -6   200 0 0
+# Face 2 (Left): Tip to (-2, -1, -8) and (-2, -1, -6)
+triangle 0 3 -7  -2 -1 -8  -2 -1 -6  180 0 0
+# Face 3 (Right): Tip to (2, -1, -6) and (2, -1, -8)
+triangle 0 3 -7   2 -1 -6   2 -1 -8  160 0 0
+# Face 4 (Back): Tip to (2, -1, -8) and (-2, -1, -8)
+triangle 0 3 -7   2 -1 -8  -2 -1 -8  140 0 0
+
+
+# --- Floating "Wall" or Abstract Art (3 Triangles) ---
+# Tilted planes far to the left
+triangle -5 5 -10  -5 -1 -10  -8 2 -5   255 100 0
+# Tilted planes far to the right
+triangle 5 5 -10   5 -1 -10   8 2 -5    0 255 255
+# Small floating shard near the camera
+triangle 0.5 1 -1  0.7 1.2 -1  0.6 0.8 -1.2  255 255 255

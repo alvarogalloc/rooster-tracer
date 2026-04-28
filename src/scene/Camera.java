@@ -3,12 +3,20 @@
 // - lets consumer handle ray tracing and color assignment
 
 package scene;
-import math.Vector3D;
 import math.Ray;
+import math.Vector3D;
 public class Camera {
   private int width;
   private int height;
 
+  private float fov;
+
+  private Vector3D pos;
+  private Vector3D up;
+  private Vector3D lookAt;
+
+  private float near;
+  private float far;
   public int getWidth() {
     return width;
   }
@@ -17,19 +25,16 @@ public class Camera {
     return height;
   }
 
-  private float fov;
 
-  private Vector3D pos;
-  private Vector3D up;
-  private Vector3D lookAt;
-
-  public Camera(int width, int height, float fov, Vector3D pos, Vector3D up, Vector3D lookAt) {
+  public Camera(int width, int height, float fov, Vector3D pos, Vector3D up, Vector3D lookAt, float near, float far) {
     this.width = width;
     this.height = height;
     this.fov = fov;
     this.pos = pos;
     this.up = up;
     this.lookAt = lookAt;
+    this.near = near;
+    this.far = far;
   }
 
   @FunctionalInterface
