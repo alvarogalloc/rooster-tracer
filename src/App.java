@@ -10,7 +10,9 @@ public class App {
         (float) Math.toRadians(90),
         new Vector3D(0, 0, 0), // pos
         new Vector3D(0, 1, 0), // up
-        new Vector3D(0, 0, -1) // lookAt (looking down the negative Z axis)
+        new Vector3D(0, 0, -1), // lookAt (looking down the negative Z axis),
+        0.01f, // near plane
+        1000f // far plane
     );
 
     // 2. Setup Scene from file

@@ -28,7 +28,7 @@ public class Sphere implements Object3D {
   }
 
   @Override
-  public Optional<Intersection> isHit(Ray ray) {
+  public Optional<Intersection> isHit(Ray ray, Interval tRange) {
     Vector3D oc = ray.getPos().add(center.mul(-1));
     // general formula
     float a = ray.getDir().dot(ray.getDir());
@@ -44,7 +44,7 @@ public class Sphere implements Object3D {
     // has roots
     float t = (-b - (float) Math.sqrt(discriminant)) / (2.0f * a);
     // no roots behind de camera
-    if (t <= 0) {
+    if (t <= 0 || !tRange.contains(t)) {
       return Optional.empty();
     }
 
