@@ -2,8 +2,8 @@ package objects;
 
 import java.awt.Color;
 import java.util.Optional;
-
 import math.Intersection;
+import math.Interval;
 import math.Matrix3;
 import math.Ray;
 import math.Vector3D;
@@ -26,7 +26,7 @@ public class Triangle  implements  Object3D{
         return color;
     }
 @Override
-    public Optional<Intersection> isHit(Ray ray) {
+    public Optional<Intersection> isHit(Ray ray, Interval tRange) {
         // col0 = -ray.direction
         Vector3D col0 = ray.getDir().mul(-1);
         // col1 = p1 - p0
@@ -46,7 +46,7 @@ public class Triangle  implements  Object3D{
 
         float dt = new Matrix3(col3, col1, col2).determinant();
         float t = dt / d0;
-        if (t < 0) {
+        if (t < 0 || !tRange.contains(t)) {
             return Optional.empty(); // Hit is behind the ray origin
         }
 

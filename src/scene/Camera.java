@@ -37,6 +37,12 @@ public class Camera {
     this.far = far;
   }
 
+  public float getNearPlane() {
+    return near;
+  }
+  public float getFarPlane() {
+    return far;
+  }
   @FunctionalInterface
   public interface RayConsumer {
     void accept(Ray ray, int x, int y);

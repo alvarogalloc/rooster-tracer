@@ -3,7 +3,7 @@ package math;
 public final class Interval {
   final private float min;
   final private float max;
-  Interval(float mn, float mx) {
+  public Interval(float mn, float mx) {
     this.min = mn;
     this.max = mx;
   }

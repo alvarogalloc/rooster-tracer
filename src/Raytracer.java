@@ -2,10 +2,9 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
-
 import javax.imageio.ImageIO;
-
 import math.Intersection;
+import math.Interval;
 import math.Ray;
 import objects.Object3D;
 
@@ -35,8 +34,9 @@ public class Raytracer {
       return context.getBgColor();
     }
     Intersection closestHit = null;
+    Interval tRange = new Interval(this.context.getCamera().getNearPlane(), this.context.getCamera().getFarPlane());
     for (Object3D obj : context.getScene().getObjects()) {
-      Optional<Intersection> hit = obj.isHit(ray);
+      Optional<Intersection> hit = obj.isHit(ray,tRange);
       if (hit.isPresent()) {
         if (closestHit == null || hit.get().getT() < closestHit.getT()) {
           closestHit = hit.get();
