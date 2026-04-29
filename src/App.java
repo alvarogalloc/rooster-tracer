@@ -18,7 +18,7 @@ public class App {
     // 2. Setup Scene from file
     Scene scene = SceneParser.parseScene("sample.rscn");
 
-    RaytracerContext context = new RaytracerContext(scene, camera, Color.WHITE, 5);
+    RaytracerContext context = new RaytracerContext(scene, camera, Color.BLUE, 5);
 
     Raytracer tracer = new Raytracer(context);
     tracer.run("output.png");

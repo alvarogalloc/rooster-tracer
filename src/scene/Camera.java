@@ -3,28 +3,27 @@
 // - lets consumer handle ray tracing and color assignment
 
 package scene;
+
 import math.Ray;
 import math.Vector3D;
+
 public class Camera {
-  private int width;
-  private int height;
+  private final int width;
+  private final int height;
+  private final float fov;
+  private final Vector3D pos;
+  private final Vector3D up;
+  private final Vector3D lookAt;
+  private final float near;
+  private final float far;
 
-  private float fov;
-
-  private Vector3D pos;
-  private Vector3D up;
-  private Vector3D lookAt;
-
-  private float near;
-  private float far;
-  public int getWidth() {
+  public final int getWidth() {
     return width;
   }
 
-  public int getHeight() {
+  public final int getHeight() {
     return height;
   }
-
 
   public Camera(int width, int height, float fov, Vector3D pos, Vector3D up, Vector3D lookAt, float near, float far) {
     this.width = width;
@@ -40,9 +39,11 @@ public class Camera {
   public float getNearPlane() {
     return near;
   }
+
   public float getFarPlane() {
     return far;
   }
+
   @FunctionalInterface
   public interface RayConsumer {
     void accept(Ray ray, int x, int y);

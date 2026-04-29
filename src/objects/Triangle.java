@@ -67,6 +67,6 @@ public class Triangle  implements  Object3D{
         
         Vector3D normal = col1.cross(col2).normalize();
 
-        return Optional.of(new Intersection(this, t));
+        return Optional.of(new Intersection(hitPoint, normal, t));
     }
 }

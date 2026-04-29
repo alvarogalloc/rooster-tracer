@@ -9,7 +9,7 @@ import math.Ray;
 import objects.Object3D;
 
 public class Raytracer {
-  private RaytracerContext context;
+  final private RaytracerContext context;
 
   public Raytracer(RaytracerContext context) {
     this.context = context;
@@ -20,12 +20,12 @@ public class Raytracer {
     saveImage(outputPath);
   }
 
-  private void saveImage(String outputPath)  {
+  private void saveImage(String outputPath) {
     File outputFile = new File(outputPath);
     try {
       ImageIO.write(context.getImage(), "png", outputFile);
     } catch (IOException e) {
-      e.printStackTrace();
+      System.err.println("Error saving image: " + e.getMessage());
     }
   }
 
@@ -35,16 +35,18 @@ public class Raytracer {
     }
     Intersection closestHit = null;
     Interval tRange = new Interval(this.context.getCamera().getNearPlane(), this.context.getCamera().getFarPlane());
+    Object3D hitObject = null;
     for (Object3D obj : context.getScene().getObjects()) {
-      Optional<Intersection> hit = obj.isHit(ray,tRange);
+      Optional<Intersection> hit = obj.isHit(ray, tRange);
       if (hit.isPresent()) {
         if (closestHit == null || hit.get().getT() < closestHit.getT()) {
           closestHit = hit.get();
+          hitObject = obj;
         }
       }
     }
-    if (closestHit != null) {
-      return closestHit.getObj().getColor();
+    if (closestHit != null && hitObject != null) {
+      return hitObject.getColor();
     } else {
       return context.getBgColor();
     }

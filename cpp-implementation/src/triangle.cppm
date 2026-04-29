@@ -4,6 +4,7 @@ import object3d;
 import std;
 import ray;
 import hitevent;
+import interval;
 import color_rgb;
 
 export namespace cg {
@@ -15,7 +16,7 @@ struct triangle : object3d {
   vec3 p2;
   color_rgb color_;
   color_rgb color() const override { return color_; }
-  std::optional<hitevent> get_hit(ray) const override;
+  std::optional<hitevent> get_hit(ray, interval) const override;
 };
 
 } // namespace cg

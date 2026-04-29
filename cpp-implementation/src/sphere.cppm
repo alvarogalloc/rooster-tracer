@@ -12,7 +12,7 @@ struct sphere : object3d {
   float radius;
   vec3 pos;
   color_rgb color_;
-  std::optional<hitevent> get_hit(ray) const override;
+  std::optional<hitevent> get_hit(ray, interval) const override;
   color_rgb color() const override { return color_; }
 };
 
