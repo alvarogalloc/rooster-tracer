@@ -1,15 +1,23 @@
 package math;
-import objects.Object3D;
 public class Intersection {
-    private Object3D obj;
-    private float t;
-    public Intersection(Object3D obj, float t) {
-        this.obj = obj;
+    final private Vector3D point;
+    final private Vector3D normal;
+    final private float t;
+    
+    public Intersection(Vector3D point, Vector3D normal, float t) {
+        this.point = point;
+        this.normal = normal;
         this.t = t;
     }
-    public Object3D getObj() {
-        return obj;
+
+    public Vector3D getPoint() {
+        return point;
     }
+
+    public Vector3D getNormal() {
+        return normal;
+    }
+
     public float getT() {
         return t;
     }

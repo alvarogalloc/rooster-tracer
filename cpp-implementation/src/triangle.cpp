@@ -5,7 +5,7 @@ import interval;
 using namespace cg;
 inline auto v(vec3 vec) { return glm::vec3{vec.x, vec.y, vec.z}; }
 namespace cg {
-std::optional<hitevent> triangle::get_hit(ray r) const {
+std::optional<hitevent> triangle::get_hit(ray r, interval i) const {
   using glm::mat3;
   const auto col0 = v(-1 * r.dir);
   const auto col1 = v(p1 - p0);
@@ -19,7 +19,7 @@ std::optional<hitevent> triangle::get_hit(ray r) const {
 
   const auto dt = glm::determinant(mat3{col3, col1, col2});
   const float t = dt / d0;
-  if (t < 0.f) // esta detras del rayo
+  if (t < 0.f || !i.contains(t)) // esta detras del rayo
     return std::nullopt;
 
   const auto du = glm::determinant(mat3{col0, col3, col2});

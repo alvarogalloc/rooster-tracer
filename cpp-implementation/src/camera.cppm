@@ -12,6 +12,8 @@ struct camera {
   vec3 pos;
   vec3 up;
   vec3 lookAt;
+  float far;
+  float near;
   vec3 screen_to_ndc(int x, int y);
   ray compute_ray(int x, int y, vec3 forward, vec3 right, vec3 upVec);
   void cast_all_rays(std::function<void(ray, int, int)> ray_callback);

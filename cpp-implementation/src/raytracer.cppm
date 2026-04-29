@@ -7,6 +7,7 @@ import hitevent;
 import scene;
 import vec3;
 import ray;
+import interval;
 import std;
 export namespace cg {
 struct raytracer {
@@ -54,11 +55,12 @@ struct raytracer {
       return ctx.bg_color;
     }
     std::optional<hitevent> closest_hit;
-    std::optional<object3d *> hit_obj;
+    object3d * hit_obj;
+    const interval i{ctx.camera.near,ctx.camera.far};
     for (const auto &obj : ctx.scene.objects) {
       if (not bool(obj))
         continue;
-      std::optional<hitevent> hit = obj->get_hit(ray);
+      std::optional<hitevent> hit = obj->get_hit(ray, i);
       if (hit) {
         if (not closest_hit or (hit.value().t < closest_hit.value().t)) {
           closest_hit = hit.value();
@@ -67,7 +69,7 @@ struct raytracer {
       }
     }
     if (closest_hit and hit_obj) {
-      return hit_obj.value()->color();
+      return hit_obj->color();
     } else {
       return ctx.bg_color;
     }

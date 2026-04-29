@@ -4,9 +4,9 @@ import java.util.Optional;
 import math.*;
 
 public class Sphere implements Object3D {
-  private Vector3D center;
-  private float radius;
-  private Color color;
+  private final Vector3D center;
+  private final float radius;
+  private final Color color;
 
   public Sphere(Vector3D center, float radius, Color color) {
     this.center = center;
@@ -47,9 +47,9 @@ public class Sphere implements Object3D {
     if (t <= 0 || !tRange.contains(t)) {
       return Optional.empty();
     }
-
-    return Optional.of(new Intersection(this, t));
-
+    Vector3D hitPoint = ray.at(t);
+    Vector3D normal = hitPoint.add(center.mul(-1)).normalize();
+    return Optional.of(new Intersection(hitPoint, normal, t));
   }
 
 }

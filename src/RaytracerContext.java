@@ -1,15 +1,14 @@
 import java.awt.Color;
 import java.awt.image.BufferedImage;
-
 import scene.Camera;
 import scene.Scene;
 
 public class RaytracerContext {
-    private Scene scene;
-    private Camera camera;
-    private Color bgColor;
-    private BufferedImage image;
-    private int maxDepth;
+    private final Scene scene;
+    private final Camera camera;
+    private final Color bgColor;
+    private final BufferedImage image;
+    private final int maxDepth;
 
 
     public RaytracerContext(Scene scene, Camera camera, Color bgColor, int maxDepth) {
