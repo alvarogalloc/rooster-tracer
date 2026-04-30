@@ -15,7 +15,7 @@ std::optional<hitevent> sphere::get_hit(ray r, interval i) const {
   }
 
   float t = (h - std::sqrt(discriminant)) / a;
-  if (t<0 || !i.contains(t)){
+  if (t < 0 || !i.contains(t)) {
     return std::nullopt;
   }
   return hitevent{t, r.at(t), (r.at(t) - pos) / radius};

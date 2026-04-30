@@ -25,7 +25,7 @@ std::optional<hitevent> triangle::get_hit(ray r, interval i) const {
   const auto du = glm::determinant(mat3{col0, col3, col2});
   const interval zero_to_one{0.f, 1.f};
   const float u = du / d0;
-  if (!zero_to_one.contains(u)) 
+  if (!zero_to_one.contains(u))
     return std::nullopt;
 
   const auto dv = glm::determinant(mat3{col0, col1, col3});

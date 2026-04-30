@@ -13,10 +13,10 @@ export namespace cg {
 struct raytracer {
 
   struct context {
-    scene scene;
-    camera camera;
+    scene scene_;
+    camera camera_;
     color_rgb bg_color;
-    std::vector<color_rgb> image;
+    std::vector<color_rgb> image_;
     u32 maxDepth;
   };
   context ctx;
@@ -29,14 +29,14 @@ struct raytracer {
   }
 
   void saveImage(std::string_view path) {
-    const int w = ctx.camera.width;
-    const int h = ctx.camera.height;
+    const int w = ctx.camera_.width;
+    const int h = ctx.camera_.height;
     const int channels = 3;
 
     std::vector<u8> pixels;
     pixels.reserve(w * h * channels);
 
-    for (const color_rgb &c : ctx.image) {
+    for (const color_rgb &c : ctx.image_) {
       auto [r, g, b] = c.to_rgb_255();
       pixels.push_back(r);
       pixels.push_back(g);
@@ -56,8 +56,8 @@ struct raytracer {
     }
     std::optional<hitevent> closest_hit;
     object3d * hit_obj;
-    const interval i{ctx.camera.near,ctx.camera.far};
-    for (const auto &obj : ctx.scene.objects) {
+    const interval i{ctx.camera_.near,ctx.camera_.far};
+    for (const auto &obj : ctx.scene_.objects) {
       if (not bool(obj))
         continue;
       std::optional<hitevent> hit = obj->get_hit(ray, i);
@@ -76,10 +76,10 @@ struct raytracer {
   }
 
   void render() {
-    ctx.camera.cast_all_rays([this](auto ray, auto x, auto y) {
+    ctx.camera_.cast_all_rays([this](auto ray, auto x, auto y) {
       color_rgb color = trace_ray(ray, ctx.maxDepth);
       // Set the color of the corresponding pixel in the image
-      ctx.image.at(ctx.camera.width * y + x) = color;
+      ctx.image_.at(ctx.camera_.width * y + x) = color;
     });
   }
 };
