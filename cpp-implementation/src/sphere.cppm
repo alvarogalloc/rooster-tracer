@@ -4,6 +4,7 @@ import color_rgb;
 import std;
 import object3d;
 import hitevent;
+import interval;
 import ray;
 
 export namespace cg {
