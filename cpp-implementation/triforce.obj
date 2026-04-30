@@ -1,0 +1,58 @@
+# The Triforce (The Legend of Zelda)
+# Centered for camera at (0,0,0) looking down -Z
+
+# --- Vertices ---
+# Front Face (Z = -2.8)
+v  0.0  1.0 -2.8  #  1: Top Triangle, Top
+v -0.5  0.0 -2.8  #  2: Top Tri BL / Bot-Left Tri Top
+v  0.5  0.0 -2.8  #  3: Top Tri BR / Bot-Right Tri Top
+v -1.0 -1.0 -2.8  #  4: Bot-Left Tri, Bot-Left
+v  0.0 -1.0 -2.8  #  5: Bot-Left Tri BR / Bot-Right Tri BL
+v  1.0 -1.0 -2.8  #  6: Bot-Right Tri, Bot-Right
+
+# Back Face (Z = -3.2)
+v  0.0  1.0 -3.2  #  7: Top Triangle, Top (Back)
+v -0.5  0.0 -3.2  #  8: Top Tri BL (Back)
+v  0.5  0.0 -3.2  #  9: Top Tri BR (Back)
+v -1.0 -1.0 -3.2  # 10: Bot-Left Tri, Bot-Left (Back)
+v  0.0 -1.0 -3.2  # 11: Bot-Left Tri BR (Back)
+v  1.0 -1.0 -3.2  # 12: Bot-Right Tri, Bot-Right (Back)
+
+
+# --- Faces (CCW Winding) ---
+
+# Front Faces (Normal points +Z)
+f 1 2 3
+f 2 4 5
+f 3 5 6
+
+# Back Faces (Normal points -Z)
+f 7 9 8
+f 8 11 10
+f 9 12 11
+
+# --- Thickness / Side Faces ---
+
+# Top Triangle Sides
+f 1 7 8
+f 1 8 2
+f 1 3 9
+f 1 9 7
+f 2 8 9
+f 2 9 3
+
+# Bottom-Left Triangle Sides
+f 2 8 10
+f 2 10 4
+f 2 5 11
+f 2 11 8
+f 4 10 11
+f 4 11 5
+
+# Bottom-Right Triangle Sides
+f 3 9 11
+f 3 11 5
+f 3 6 12
+f 3 12 9
+f 5 11 12
+f 5 12 6

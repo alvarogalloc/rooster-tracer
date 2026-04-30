@@ -5,6 +5,7 @@ import object3d;
 export namespace cg {
 
 struct scene {
-  std::vector<std::unique_ptr<object3d>> objects{};
+  using object_collection = std::vector<std::unique_ptr<object3d>>;
+  object_collection objects{};
 };
 } // namespace cg

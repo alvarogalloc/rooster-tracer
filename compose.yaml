@@ -1,0 +1,9 @@
+services:
+  raytracer:
+    image: eclipse-temurin:21-alpine
+    working_dir: /app
+    volumes:
+      # Maps your current directory to /app in the container
+      - .:/app:z
+    # Finds all Java files, compiles them into a 'bin' folder, and runs the App
+    command: sh -c "javac -d bin $$(find src -name '*.java') && java -cp bin App"

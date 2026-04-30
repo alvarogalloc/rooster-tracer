@@ -11,7 +11,6 @@ import interval;
 import std;
 export namespace cg {
 struct raytracer {
-
   struct context {
     scene scene_;
     camera camera_;
