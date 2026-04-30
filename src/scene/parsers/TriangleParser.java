@@ -1,11 +1,10 @@
 package scene.parsers;
 
-import objects.Object3D;
 import objects.Triangle;
 import math.Vector3D;
+import scene.Scene;
 
 import java.awt.Color;
-import java.util.Optional;
 
 /**
  * TriangleParser reads a line with the format:
@@ -14,10 +13,10 @@ import java.util.Optional;
  */
 public class TriangleParser {
 
-  public static Optional<Object3D> parseTriangle(String[] tokens) {
+  public static void parseTriangle(Scene scene, String[] tokens) {
     if (tokens.length != 13) {
-      System.out.println("Invalid triangle format. Expected: triangle <x0> <y0> <z0> <x1> <y1> <z1> <x2> <y2> <z2> <r> <g> <b>");
-      return Optional.empty();
+      System.err.println("Invalid triangle format. Expected: triangle <x0> <y0> <z0> <x1> <y1> <z1> <x2> <y2> <z2> <r> <g> <b>");
+      return;
     }
 
     try {
@@ -42,10 +41,9 @@ public class TriangleParser {
       Vector3D p1 = new Vector3D(x1, y1, z1);
       Vector3D p2 = new Vector3D(x2, y2, z2);
 
-      return Optional.of(new Triangle(p0, p1, p2, new Color(r, g, b)));
+      scene.add(new Triangle(p0, p1, p2, new Color(r, g, b)));
     } catch (NumberFormatException e) {
       System.err.println("Error parsing triangle: " + e.getMessage());
-      return Optional.empty();
     }
   }
 }

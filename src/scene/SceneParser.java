@@ -3,11 +3,9 @@ package scene;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Optional;
-import objects.Object3D;
 
 public class SceneParser {
-  private static String fileToken = "ROOSTERSCENEV1";
+  private static final String fileToken = "ROOSTERSCENEV1";
 
   private static boolean isValidScene(String header) {
 
@@ -39,12 +37,12 @@ public class SceneParser {
   private static void parseLine(Scene scene, String line) throws IOException {
     String[] tokens = line.split("\\s+");
     String type = tokens[0].toLowerCase();
-    Optional<Object3D> obj = Parsers.parsers.get(type).parse(tokens);
-    if (obj.isEmpty()) {
-      // skip
+    Parsers.Parser parser = Parsers.parsers.get(type);
+    if (parser == null) {
+      System.err.println("unknown type of object found: " + type);
       return;
     }
-    scene.add(obj.get());
+    parser.parse(scene, tokens);
   }
 
 }

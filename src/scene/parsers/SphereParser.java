@@ -1,11 +1,10 @@
 
 package scene.parsers;
 
-import objects.Object3D;
 import objects.Sphere;
+import scene.Scene;
 
 import java.awt.Color;
-import java.util.Optional;
 
 import math.Vector3D;
 
@@ -17,10 +16,10 @@ import math.Vector3D;
  */
 public class SphereParser {
 
-  public static Optional<Object3D> parseSphere(String[] tokens) {
+  public static void parseSphere(Scene scene, String[] tokens) {
     if (tokens.length != 8) {
-      System.out.println("Invalid sphere format. Expected: sphere <x> <y> <z> <radius> <r> <g> <b>");
-      return Optional.empty();
+      System.err.println("Invalid sphere format. Expected: sphere <x> <y> <z> <radius> <r> <g> <b>");
+      return;
     }
 
     try {
@@ -35,9 +34,9 @@ public class SphereParser {
       int g = Integer.parseInt(tokens[6]);
       int b = Integer.parseInt(tokens[7]);
 
-      return Optional.of(new Sphere(new Vector3D(x, y, z), radius, new Color(r, g, b)));
-    } catch (Exception e) {
-      return Optional.empty();
+      scene.add(new Sphere(new Vector3D(x, y, z), radius, new Color(r, g, b)));
+    } catch (NumberFormatException e) {
+      System.err.println("Error parsing sphere: " + e.getMessage());
     }
   }
 
