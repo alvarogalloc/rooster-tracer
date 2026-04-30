@@ -1,0 +1,45 @@
+# Super Mario 64 Power Star
+# Centered for camera at (0,0,0) looking down -Z
+
+# --- Vertices ---
+# Perimeter (Z = -2.0)
+v  0.00  1.00 -2.00
+v  0.29  0.40 -2.00
+v  0.95  0.31 -2.00
+v  0.48 -0.15 -2.00
+v  0.59 -0.81 -2.00
+v  0.00 -0.50 -2.00
+v -0.59 -0.81 -2.00
+v -0.48 -0.15 -2.00
+v -0.95  0.31 -2.00
+v -0.29  0.40 -2.00
+
+# Center Points (Thickness)
+v  0.00  0.00 -1.50
+v  0.00  0.00 -2.50
+
+# --- Faces (CCW Winding) ---
+
+# Front Faces (Normals point +Z, toward camera)
+f 11 1 10
+f 11 10 9
+f 11 9 8
+f 11 8 7
+f 11 7 6
+f 11 6 5
+f 11 5 4
+f 11 4 3
+f 11 3 2
+f 11 2 1
+
+# Back Faces (Normals point -Z, away from camera)
+f 12 10 1
+f 12 9 10
+f 12 8 9
+f 12 7 8
+f 12 6 7
+f 12 5 6
+f 12 4 5
+f 12 3 4
+f 12 2 3
+f 12 1 2

@@ -8,6 +8,11 @@ export using u8 = std::uint8_t;
 export namespace cg {
 struct color_rgb : vec3 {
   using rgb255 = std::tuple<u8, u8, u8>;
+  static color_rgb from_rgb_256(u8 r, u8 g, u8 b) {
+    const vec3 v{float(r), float(g), float(b)};
+    const float i_limit = 1.f / 255.99f;
+    return color_rgb{v * i_limit};
+  }
   auto to_rgb_255() const {
     const float limit = 255.99f;
 
