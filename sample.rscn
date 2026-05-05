@@ -1,4 +1,5 @@
 ROOSTERSCENEV1
+dir_light -1 -1 0 255 255 255 0.7
 # Format:
 # sphere x y z radius R G B
 # triangle x1 y1 z1  x2 y2 z2  x3 y3 z3  R G B

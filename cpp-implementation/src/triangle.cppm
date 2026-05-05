@@ -9,8 +9,10 @@ import color_rgb;
 
 export namespace cg {
 struct triangle : object3d {
-  triangle(vec3 p0, vec3 p1, vec3 p2, color_rgb c)
-      : p0(p0), p1(p1), p2(p2), color_(c) {}
+  triangle(vec3 p0, vec3 p1, vec3 p2, color_rgb c, std::size_t material_id = 0)
+      : p0(p0), p1(p1), p2(p2), color_(c) {
+    this->material_id = material_id;
+  }
   vec3 p0;
   vec3 p1;
   vec3 p2;

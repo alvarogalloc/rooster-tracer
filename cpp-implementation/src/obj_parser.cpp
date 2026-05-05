@@ -14,17 +14,12 @@ import color_rgb;
 
 namespace cg::parsers {
 void parse_vertex(std::istringstream &ss, scene &, std::vector<vec3> &vertices,
-                  vec3 origin) {
+                  vec3 origin, std::size_t) {
   vertices.push_back(parse_vec3(ss) - origin);
-}
-color_rgb next_color() {
-  static color_rgb c{1.0f, 0.0f, 0.0f};
-  c = color_rgb{c.y, c.z, c.x};
-  return c;
 }
 
 void parse_face(std::istringstream &line_stream, scene &s,
-                std::vector<vec3> &vertices, vec3) {
+                std::vector<vec3> &vertices, vec3, std::size_t material_id) {
   std::array<int, 3> indices{};
   for (auto &idx : indices) {
     std::string token;
@@ -32,37 +27,35 @@ void parse_face(std::istringstream &line_stream, scene &s,
     // OBJ supports a lot of variant, for now we only take the index of the
     // vertex
     idx = std::stoi(token.substr(0, token.find('/'))) - 1; // OBJ is 1-indexed
-    if (idx <= 0 or idx >= vertices.size())
+    if (idx < 0 || idx >= static_cast<int>(vertices.size()))
       return;
   }
 
   s.objects.push_back(std::make_unique<cg::triangle>(
       vertices.at(indices[0]), vertices.at(indices[1]), vertices.at(indices[2]),
-      next_color()));
+      color_rgb{}, material_id));
 }
 
 static const std::unordered_map<std::string,
-                                void (*)(std::istringstream &, scene &,
-                                         std::vector<vec3> &, vec3)>
+                                 void (*)(std::istringstream &, scene &,
+                                          std::vector<vec3> &, vec3,
+                                          std::size_t)>
     token_map{
         {"v", &parse_vertex},
         {"f", &parse_face},
     };
 void parse_obj_file_contents(const std::string &filename, scene &s,
-                             vec3 origin) {
+                             vec3 origin, std::size_t material_id) {
   std::println("loading obj: {}", filename);
   std::ifstream f{filename};
   if (not f.is_open()) {
     throw std::runtime_error{std::format("obj file ({}) not found", filename)};
   }
   std::string line;
-  int line_i = 0;
   std::vector<vec3> vertices;
   auto current_obj_number = s.objects.size();
   while (std::getline(f, line)) {
-    line_i++;
     parse_utils::trim_line(line);
-    std::println(std::cerr, "line {}: {}", line_i, line);
     if (parse_utils::should_skip_line(line)) {
       continue;
     }
@@ -70,11 +63,9 @@ void parse_obj_file_contents(const std::string &filename, scene &s,
     std::string type;
     ss >> type;
     if (not token_map.count(type)) {
-      std::println(std::cerr, "unexpected token at line {}: \"{}\"", line_i,
-                   type);
       continue;
     }
-    token_map.at(type)(ss, s, vertices, origin);
+    token_map.at(type)(ss, s, vertices, origin, material_id);
   }
   std::println("done loading model (vertex count: {}, face count: {})",
                vertices.size(),s.objects.size() - current_obj_number);
@@ -83,8 +74,29 @@ void parse_obj_file_contents(const std::string &filename, scene &s,
 void parse_obj_file(std::istringstream &ss, scene &s) {
   std::string filename;
   ss >> filename;
-  const vec3 origin = parse_vec3(ss);
-  const color_rgb color = parse_color(ss);
-  parse_obj_file_contents(filename, s, origin);
+
+  vec3 origin{0, 0, 0};
+  float ox{}, oy{}, oz{};
+  if (ss >> ox >> oy >> oz) {
+    origin = vec3{ox, oy, oz};
+  } else {
+    ss.clear();
+  }
+
+  std::size_t material_id = 0;
+  if (ss >> material_id) {
+    if (s.materials.empty()) {
+      throw std::runtime_error{"obj parser: material index provided but no materials are defined"};
+    }
+    if (material_id >= s.materials.size()) {
+      throw std::runtime_error{
+          std::format("obj parser: material index {} out of range [0, {})",
+                      material_id, s.materials.size())};
+    }
+  } else {
+    ss.clear();
+  }
+
+  parse_obj_file_contents(filename, s, origin, material_id);
 }
 } // namespace cg::parsers

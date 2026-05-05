@@ -30,15 +30,19 @@ std::optional<hitevent> triangle::get_hit(ray r, interval i) const {
 
   const auto dv = glm::determinant(mat3{col0, col1, col3});
   const interval v_range{0.f, 1.f - u};
-  const float v = dv / d0;
-  if (!v_range.contains(v))
+  const float bary_v = dv / d0;
+  if (!v_range.contains(bary_v))
     return std::nullopt;
 
   hitevent hit;
   hit.t = t;
   hit.p = r.at(t);
-  const auto normal = glm::cross(col1, col2);
+  auto normal = glm::normalize(glm::cross(col1, col2));
+  if (glm::dot(normal, v(r.dir)) > 0.f) {
+    normal = -normal;
+  }
   hit.normal = vec3{normal.x, normal.y, normal.z};
+  hit.m_id = material_id;
   return hit;
 }
 

@@ -22,7 +22,7 @@ struct camera {
 vec3 camera::screen_to_ndc(int x, int y) {
   if (height == 0)
     return vec3{0, 0, 0};
-  const float aspectRatio = width / height;
+  const float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
   return vec3{
       (2 * ((x + 0.5f) / width) - 1) * std::tan(fov / 2) * aspectRatio,
       (1 - 2 * ((y + 0.5f) / height)) * std::tan(fov / 2),

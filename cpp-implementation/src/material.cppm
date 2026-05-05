@@ -13,22 +13,10 @@ struct material {
   // float metallic      = 0.0f;
 };
 color_rgb shade(const material &m, const hitevent &he,
-                const directional_light &l, vec3)  {
-  // ambient
-  color_rgb result = l.color;
-  // emission
-  // result += m.emission;
-
-  // shadow check placeholder — you'll pass a scene/BVH later
-  // if (in_shadow(he.p, l, scene)) return result;
-
-  float lambert = std::max(0.0f, glm::dot(he.normal, -l.dir));
-  if (lambert <= 0.0f)
-    return result;
-
-  result += l.radiance() * m.albedo * lambert;
-
-  return result;
+                const directional_light &l, vec3) {
+  const vec3 n = glm::normalize(he.normal);
+  const float lambert = std::max(0.0f, glm::dot(n, -l.dir));
+  return color_rgb{l.radiance() * m.albedo * lambert};
 }
 using material_collection = std::vector<material>;
 } // namespace cg

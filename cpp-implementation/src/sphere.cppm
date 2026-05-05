@@ -10,7 +10,10 @@ import ray;
 
 export namespace cg {
 struct sphere : object3d {
-  sphere(float r, vec3 v, color_rgb col) : radius(r), pos(v), color_(col) {}
+  sphere(float r, vec3 v, color_rgb col, std::size_t material_id = 0)
+      : radius(r), pos(v), color_(col) {
+    this->material_id = material_id;
+  }
   float radius;
   vec3 pos;
   color_rgb color_;
