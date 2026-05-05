@@ -4,8 +4,10 @@ ROOSTERSCENEV1
 # obj stanford_bunny.obj
 
 # albedo lambert color: just a color
-mat 255 255 255
+mat 247 200 65
 # <dir> <color> <intensity>
-dir_light 0 -1 0 60 120 120 0.5 
+dir_light -1 -1 0 255 255 255 0.7 
 
-obj beetle.obj
+obj beetle.obj 0 0 0 0
+sphere 0 1 0 0.3 255 255 0
+# obj .obj 0 0 0 0

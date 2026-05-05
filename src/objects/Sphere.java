@@ -49,6 +49,9 @@ public class Sphere implements Object3D {
     }
     Vector3D hitPoint = ray.at(t);
     Vector3D normal = hitPoint.add(center.mul(-1)).normalize();
+    if (normal.dot(ray.getDir()) > 0f) {
+      normal = normal.mul(-1f);
+    }
     return Optional.of(new Intersection(hitPoint, normal, t));
   }
 

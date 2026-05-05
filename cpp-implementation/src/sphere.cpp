@@ -18,7 +18,11 @@ std::optional<hitevent> sphere::get_hit(ray r, interval i) const {
   if (t < 0 || !i.contains(t)) {
     return std::nullopt;
   }
-  return hitevent{t, r.at(t), (r.at(t) - pos) / radius};
+  auto normal = glm::normalize((r.at(t) - pos) / radius);
+  if (glm::dot(normal, r.dir) > 0.f) {
+    normal = -normal;
+  }
+  return hitevent{t, r.at(t), normal, material_id};
 }
 
 } // namespace cg

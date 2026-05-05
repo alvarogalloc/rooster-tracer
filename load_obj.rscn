@@ -2,4 +2,6 @@ ROOSTERSCENEV1
 #obj triforce.obj
 #obj superstar.obj
 # obj stanford_bunny.obj
+mat 247 200 65
+dir_light -1 -1 0 255 255 255 0.7
 obj beetle.obj
