@@ -30,15 +30,16 @@ vec3 camera::screen_to_ndc(int x, int y) {
   };
 }
 ray camera::compute_ray(int sx, int sy, vec3 forward, vec3 right, vec3 upVec) {
-  const auto [x, y, _] = screen_to_ndc(sx, sy);
-  const auto dir = normalized(forward + (right * x) + (upVec * y));
+  const auto s_coord = screen_to_ndc(sx, sy);
+  const auto dir =
+      glm::normalize(forward + (right * s_coord.x) + (upVec * s_coord.y));
   return ray(pos, dir);
 }
 
 void camera::cast_all_rays(std::function<void(ray, int, int)> ray_callback) {
-  const vec3 forward = normalized(lookAt + (pos * -1));
-  const vec3 right = normalized(cross(forward, up));
-  const vec3 upV = normalized(cross(right, forward));
+  const vec3 forward = glm::normalize(lookAt - pos);
+  const vec3 right = glm::normalize(cross(forward, up));
+  const vec3 upV = glm::normalize(cross(right, forward));
 
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {

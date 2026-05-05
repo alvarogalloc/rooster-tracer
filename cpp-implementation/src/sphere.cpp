@@ -4,9 +4,9 @@ namespace cg {
 
 std::optional<hitevent> sphere::get_hit(ray r, interval i) const {
   const auto dir_to_sphere = this->pos - r.pos;
-  auto a = r.dir.length_squared();
-  auto h = cg::dot(r.dir, dir_to_sphere);
-  auto c = dir_to_sphere.length_squared() - radius * radius;
+  auto a = glm::length2(r.dir);
+  auto h = glm::dot(r.dir, dir_to_sphere);
+  auto c = glm::length2(dir_to_sphere) - radius * radius;
 
   auto discriminant = h * h - a * c;
 

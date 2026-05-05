@@ -2,4 +2,10 @@ ROOSTERSCENEV1
 #obj triforce.obj
 #obj superstar.obj
 # obj stanford_bunny.obj
+
+# albedo lambert color: just a color
+mat 255 255 255
+# <dir> <color> <intensity>
+dir_light 0 -1 0 60 120 120 0.5 
+
 obj beetle.obj

@@ -15,7 +15,7 @@ struct triangle : object3d {
   vec3 p1;
   vec3 p2;
   color_rgb color_;
-  color_rgb color() const override { return color_; }
+  // color_rgb color() const override { return color_; }
   std::optional<hitevent> get_hit(ray, interval) const override;
 };
 
