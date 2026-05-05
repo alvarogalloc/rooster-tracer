@@ -7,7 +7,7 @@ inline auto v(vec3 vec) { return glm::vec3{vec.x, vec.y, vec.z}; }
 namespace cg {
 std::optional<hitevent> triangle::get_hit(ray r, interval i) const {
   using glm::mat3;
-  const auto col0 = v(-1 * r.dir);
+  const auto col0 = v(-r.dir);
   const auto col1 = v(p1 - p0);
   const auto col2 = v(p2 - p0);
   const auto col3 = v(r.pos - p0);

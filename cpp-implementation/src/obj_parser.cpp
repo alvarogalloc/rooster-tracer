@@ -13,14 +13,18 @@ import color_rgb;
  */
 
 namespace cg::parsers {
-void parse_vertex(std::istringstream &ss, scene::object_collection &,
-                  std::vector<vec3> &vertices) {
-  vertices.push_back(parse_vec3(ss) - vec3{0, 0, 0});
+void parse_vertex(std::istringstream &ss, scene &, std::vector<vec3> &vertices,
+                  vec3 origin) {
+  vertices.push_back(parse_vec3(ss) - origin);
+}
+color_rgb next_color() {
+  static color_rgb c{1.0f, 0.0f, 0.0f};
+  c = color_rgb{c.y, c.z, c.x};
+  return c;
 }
 
-void parse_face(std::istringstream &line_stream,
-                scene::object_collection &objects,
-                std::vector<vec3> &vertices) {
+void parse_face(std::istringstream &line_stream, scene &s,
+                std::vector<vec3> &vertices, vec3) {
   std::array<int, 3> indices{};
   for (auto &idx : indices) {
     std::string token;
@@ -32,24 +36,20 @@ void parse_face(std::istringstream &line_stream,
       return;
   }
 
-  static float channel{0.8f};
-  objects.push_back(std::make_unique<cg::triangle>(
+  s.objects.push_back(std::make_unique<cg::triangle>(
       vertices.at(indices[0]), vertices.at(indices[1]), vertices.at(indices[2]),
-      cg::color_rgb{channel, channel - 0.2f, channel / 4}));
-  channel += 0.05f;
-  if (channel >= 1.f)
-    channel = 0.8f;
+      next_color()));
 }
 
-static const std::unordered_map<
-    std::string, void (*)(std::istringstream &, scene::object_collection &,
-                          std::vector<vec3> &)>
+static const std::unordered_map<std::string,
+                                void (*)(std::istringstream &, scene &,
+                                         std::vector<vec3> &, vec3)>
     token_map{
         {"v", &parse_vertex},
         {"f", &parse_face},
     };
-void parse_obj_file_contents(const std::string &filename,
-                             scene::object_collection &objs) {
+void parse_obj_file_contents(const std::string &filename, scene &s,
+                             vec3 origin) {
   std::println("loading obj: {}", filename);
   std::ifstream f{filename};
   if (not f.is_open()) {
@@ -58,7 +58,7 @@ void parse_obj_file_contents(const std::string &filename,
   std::string line;
   int line_i = 0;
   std::vector<vec3> vertices;
-  auto current_obj_number = objs.size();
+  auto current_obj_number = s.objects.size();
   while (std::getline(f, line)) {
     line_i++;
     parse_utils::trim_line(line);
@@ -74,15 +74,17 @@ void parse_obj_file_contents(const std::string &filename,
                    type);
       continue;
     }
-    token_map.at(type)(ss, objs, vertices);
+    token_map.at(type)(ss, s, vertices, origin);
   }
   std::println("done loading model (vertex count: {}, face count: {})",
-              vertices.size(), objs.size() - current_obj_number);
+               vertices.size(),s.objects.size() - current_obj_number);
 }
 
-void parse_obj_file(std::istringstream &ss, scene::object_collection &objects) {
+void parse_obj_file(std::istringstream &ss, scene &s) {
   std::string filename;
   ss >> filename;
-  parse_obj_file_contents(filename, objects);
+  const vec3 origin = parse_vec3(ss);
+  const color_rgb color = parse_color(ss);
+  parse_obj_file_contents(filename, s, origin);
 }
 } // namespace cg::parsers

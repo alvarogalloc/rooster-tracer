@@ -1,6 +1,7 @@
 export module raytracer;
 import camera;
 import color_rgb;
+import directional_light;
 import stb;
 import object3d;
 import hitevent;
@@ -54,8 +55,8 @@ struct raytracer {
       return ctx.bg_color;
     }
     std::optional<hitevent> closest_hit;
-    object3d * hit_obj;
-    const interval i{ctx.camera_.near,ctx.camera_.far};
+    object3d *hit_obj;
+    const interval i{ctx.camera_.near, ctx.camera_.far};
     for (const auto &obj : ctx.scene_.objects) {
       if (not bool(obj))
         continue;
@@ -68,13 +69,21 @@ struct raytracer {
       }
     }
     if (closest_hit and hit_obj) {
-      return hit_obj->color();
+      return shade(
+          ctx.scene_.materials.at(closest_hit->m_id), *closest_hit,
+          std::get<directional_light>(ctx.scene_.lights.front()),
+          {0, 0, 0}); // FIXME: do all lights, for now only the "sun", also the
+                      // ray dir needed later for diffusion for now {0,0,0}
     } else {
       return ctx.bg_color;
     }
   }
 
   void render() {
+    if (ctx.scene_.lights.empty()) {
+      std::println(std::cerr, "you should have at least one light!!");
+      std::exit(-1);
+    }
     ctx.camera_.cast_all_rays([this](auto ray, auto x, auto y) {
       color_rgb color = trace_ray(ray, ctx.maxDepth);
       // Set the color of the corresponding pixel in the image

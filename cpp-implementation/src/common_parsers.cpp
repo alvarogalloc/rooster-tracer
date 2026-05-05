@@ -28,7 +28,7 @@ color_rgb parse_color(std::istringstream &ss) {
   const float imax_channel = 1.f / 255.99f;
   return color_rgb(parse_vec3(ss) * imax_channel);
 }
-void parse_sphere(std::istringstream &ss, scene::object_collection &objects) {
+void parse_sphere(std::istringstream &ss, scene &s) {
   const vec3 center = parse_vec3(ss);
 
   float radius{};
@@ -41,9 +41,9 @@ void parse_sphere(std::istringstream &ss, scene::object_collection &objects) {
 
   // Assumes: sphere(vec3 center, float radius, color_rgb color) and sphere :
   // object3d
-  objects.push_back(std::make_unique<sphere>(radius, center, col));
+  s.objects.push_back(std::make_unique<sphere>(radius, center, col));
 }
-void parse_triangle(std::istringstream &ss, scene::object_collection &objects) {
+void parse_triangle(std::istringstream &ss, scene &s) {
   // triangle x1 y1 z1  x2 y2 z2  x3 y3 z3  R G B
   const vec3 v0 = parse_vec3(ss);
   const vec3 v1 = parse_vec3(ss);
@@ -51,7 +51,7 @@ void parse_triangle(std::istringstream &ss, scene::object_collection &objects) {
 
   const color_rgb col = parse_color(ss);
 
-  objects.push_back(std::make_unique<triangle>(v0, v1, v2, col));
+  s.objects.push_back(std::make_unique<triangle>(v0, v1, v2, col));
 }
 
 } // namespace parsers
