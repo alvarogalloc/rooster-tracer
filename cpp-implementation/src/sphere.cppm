@@ -8,10 +8,13 @@ import interval;
 import material;
 import ray;
 
-export namespace cg {
-struct sphere : object3d {
+export namespace cg
+{
+struct sphere : object3d
+{
   sphere(float r, vec3 v, color_rgb col, std::size_t material_id = 0)
-      : radius(r), pos(v), color_(col) {
+      : radius(r), pos(v), color_(col)
+  {
     this->material_id = material_id;
   }
   float radius;

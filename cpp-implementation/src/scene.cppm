@@ -4,9 +4,11 @@ import std;
 import object3d;
 import light;
 import material;
-export namespace cg {
+export namespace cg
+{
 
-struct scene {
+struct scene
+{
   object_collection objects{};
   light_collection lights{};
   material_collection materials{};

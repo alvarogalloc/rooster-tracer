@@ -7,7 +7,8 @@ import vec3;
 import camera;
 import triangle;
 import scene_parser;
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   using namespace cg;
   // auto cam = camera{
   //     .width = 400,
@@ -20,8 +21,8 @@ int main(int argc, char **argv) {
   //     .near = 0.01f,
   // };
   auto cam = camera{
-      .width = 400,
-      .height = 400,
+      .width = 3840,
+      .height = 2160,
       .fov = std::numbers::pi_v<float> / 4, // 45° — tight enough to fill frame
       .pos = vec3{0.4f, 0.65f,
                   1.4f}, // elevated, slightly to the right, pulled back
@@ -31,7 +32,8 @@ int main(int argc, char **argv) {
       .near = 0.001f,
   };
 
-  if (argc != 3) {
+  if (argc != 3)
+  {
     std::println(std::cerr,
                  "please set the scene to render and the output img\n usage: "
                  "rooster-tracer scene.rscn output.png");
@@ -40,7 +42,8 @@ int main(int argc, char **argv) {
   const auto scene_path{argv[1]};
   const auto img_path{argv[2]};
   const auto n_pixels = static_cast<std::size_t>(cam.width * cam.height);
-  try {
+  try
+  {
     auto rt = raytracer{
         raytracer::context{.scene_ = cg::parse_scene(scene_path),
                            .camera_ = cam,
@@ -49,7 +52,9 @@ int main(int argc, char **argv) {
                            .maxDepth = 5},
     };
     rt.run(img_path);
-  } catch (const std::exception &ex) {
+  }
+  catch (const std::exception& ex)
+  {
     std::println(
         std::cerr,
         "exception caught (rooster-tracer)!, exiting...\n[reason] -> \"{}\"",
