@@ -3,9 +3,14 @@ import glm;
 import interval;
 
 using namespace cg;
-inline auto v(vec3 vec) { return glm::vec3{vec.x, vec.y, vec.z}; }
-namespace cg {
-std::optional<hitevent> triangle::get_hit(ray r, interval i) const {
+inline auto v(vec3 vec)
+{
+  return glm::vec3{vec.x, vec.y, vec.z};
+}
+namespace cg
+{
+std::optional<hitevent> triangle::get_hit(ray r, interval i) const
+{
   using glm::mat3;
   const auto col0 = v(-r.dir);
   const auto col1 = v(p1 - p0);
@@ -38,7 +43,8 @@ std::optional<hitevent> triangle::get_hit(ray r, interval i) const {
   hit.t = t;
   hit.p = r.at(t);
   auto normal = glm::normalize(glm::cross(col1, col2));
-  if (glm::dot(normal, v(r.dir)) > 0.f) {
+  if (glm::dot(normal, v(r.dir)) > 0.f)
+  {
     normal = -normal;
   }
   hit.normal = vec3{normal.x, normal.y, normal.z};

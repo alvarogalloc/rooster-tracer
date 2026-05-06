@@ -9,11 +9,14 @@ import common_parsers;
 import light;
 import directional_light;
 
-namespace cg {
+namespace cg
+{
 
-namespace parsers {
+namespace parsers
+{
 
-void parse_dir_light(std::istringstream &ss, scene &s) {
+void parse_dir_light(std::istringstream& ss, scene& s)
+{
   // of the form dir_light 0 -1 0 0 255 0 1.0
   //<dir> <color> <intensity>
   auto dir = parse_vec3(ss);
@@ -22,7 +25,8 @@ void parse_dir_light(std::istringstream &ss, scene &s) {
   ss >> intensity;
   s.lights.push_back(directional_light{dir, color, intensity});
 }
-void parse_material(std::istringstream &ss, scene &s) {
+void parse_material(std::istringstream& ss, scene& s)
+{
   // of the token "mat"
   //  albedo lambert color: just a color
   // e.g. mat 255 0 0
@@ -32,7 +36,7 @@ void parse_material(std::istringstream &ss, scene &s) {
 }
 } // namespace parsers
 static const std::unordered_map<std::string,
-                                void (*)(std::istringstream &, scene &)>
+                                void (*)(std::istringstream&, scene&)>
     handlers{
         {"sphere", &parsers::parse_sphere},
         {"triangle", &parsers::parse_triangle},
@@ -40,28 +44,33 @@ static const std::unordered_map<std::string,
         {"mat", &parsers::parse_material},
         {"dir_light", &parsers::parse_dir_light},
     };
-scene parse_scene(const std::string &filepath) {
+scene parse_scene(const std::string& filepath)
+{
 
   constexpr static auto filetoken = "ROOSTERSCENEV1";
   std::ifstream f{filepath};
-  if (not f.is_open()) {
+  if (not f.is_open())
+  {
     throw std::runtime_error{
         std::format("scene file ({}) not found", filepath)};
   }
   std::string line;
   std::getline(f, line);
-  if (not line.starts_with(filetoken)) {
+  if (not line.starts_with(filetoken))
+  {
     std::println(std::cerr, "no file token {} found", filetoken);
   }
   scene s;
-  while (std::getline(f, line)) {
+  while (std::getline(f, line))
+  {
     parse_utils::trim_line(line);
     if (parse_utils::should_skip_line(line))
       continue;
     std::istringstream ss(line);
     std::string type;
     ss >> type;
-    if (!handlers.count(type)) {
+    if (!handlers.count(type))
+    {
       std::println(std::cerr, "unknown type of object {} found", type);
       continue;
     }

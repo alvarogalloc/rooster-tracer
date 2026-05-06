@@ -4,8 +4,10 @@ import hitevent;
 import ray;
 import std;
 import interval;
-export namespace cg {
-struct object3d {
+export namespace cg
+{
+struct object3d
+{
   std::size_t material_id{0};
   // virtual color_rgb color() const = 0;
   virtual std::optional<hitevent> get_hit(ray, interval) const = 0;
