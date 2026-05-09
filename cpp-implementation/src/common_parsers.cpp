@@ -23,6 +23,11 @@ namespace parsers
 {
 std::size_t add_inline_material(scene& s, const color_rgb& albedo)
 {
+  auto it = std::ranges::find(s.materials, material{albedo});
+  if (it != s.materials.end())
+  {
+    return std::distance(std::begin(s.materials), it);
+  }
   s.materials.emplace_back(albedo);
   return s.materials.size() - 1;
 }
