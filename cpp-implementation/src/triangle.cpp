@@ -4,10 +4,25 @@ import interval;
 
 namespace cg
 {
+namespace
+{
+constexpr float kEpsLen2 = 1e-12f;
+
+[[nodiscard]] vec3 safe_normalize(vec3 v)
+{
+  const float len_sq = glm::dot(v, v);
+  if (len_sq <= kEpsLen2)
+    return vec3{0.f, 0.f, 0.f};
+  return v * glm::inversesqrt(len_sq);
+}
+} // namespace
+
 std::optional<hitevent> get_ray_triangle_hit(const triangle& tt, ray r,
                                              interval i)
 {
-  const auto& [p0, p1, p2] = tt;
+  const vec3& p0 = tt.p0;
+  const vec3& p1 = tt.p1;
+  const vec3& p2 = tt.p2;
   using glm::mat3;
   const auto col0 = -r.dir;
   const auto col1 = p1 - p0;
@@ -39,12 +54,22 @@ std::optional<hitevent> get_ray_triangle_hit(const triangle& tt, ray r,
   hitevent hit;
   hit.t = t;
   hit.p = r.at(t);
-  auto normal = glm::normalize(glm::cross(col1, col2));
+  const float bary_u = u;
+  const float bary_w = 1.f - bary_u - bary_v;
+  const vec3 face_normal = safe_normalize(glm::cross(col1, col2));
+  vec3 normal = face_normal;
+  if (tt.has_vertex_normals)
+  {
+    normal = safe_normalize(tt.n0 * bary_w + tt.n1 * bary_u + tt.n2 * bary_v);
+    if (glm::dot(normal, normal) <= kEpsLen2)
+      normal = face_normal;
+  }
   if (glm::dot(normal, r.dir) > 0.f)
   {
     normal = -normal;
   }
   hit.normal = vec3{normal.x, normal.y, normal.z};
+  hit.m_id = tt.material_id;
   return hit;
 }
 

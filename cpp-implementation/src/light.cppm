@@ -3,6 +3,7 @@ export module light;
 import std;
 import color_rgb;
 import directional_light;
+import point_light;
 export namespace cg
 {
 
@@ -14,6 +15,6 @@ struct dummy_light
   }
 };
 
-using light = std::variant<dummy_light, directional_light>;
+using light = std::variant<dummy_light, directional_light, point_light>;
 using light_collection = std::vector<light>;
 } // namespace cg

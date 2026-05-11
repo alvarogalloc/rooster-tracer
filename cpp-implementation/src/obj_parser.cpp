@@ -2,97 +2,201 @@ module obj_parser;
 import vec3;
 import common_parsers;
 import mesh3d;
-import aabb;
 import bvh;
 import triangle;
 import color_rgb;
 
-/*
- * obj parser:
- * - for now only vertices and faces (non quads yet)
- *
- *   the key is the token_map: it handles -in O(1)- the correct function for the
- * current line
- */
-
 namespace cg::parsers
 {
-void parse_vertex(std::istringstream& ss, scene&, std::vector<vec3>& vertices,
-                  vec3 origin, std::size_t)
+namespace
 {
-  vertices.push_back(parse_vec3(ss) - origin);
+constexpr int kMissingIndex = -1;
+constexpr float kNormalEpsLen2 = 1e-12f;
+
+struct face_vertex_ref
+{
+  int vertex_idx{kMissingIndex};
+  int normal_idx{kMissingIndex};
+};
+
+using face_polygon = std::vector<face_vertex_ref>;
+
+[[nodiscard]] int obj_to_zero_based(int raw_index, std::size_t count)
+{
+  if (raw_index > 0)
+    return raw_index - 1;
+  if (raw_index < 0)
+    return static_cast<int>(count) + raw_index;
+  return kMissingIndex;
 }
 
-void parse_face(std::istringstream& line_stream, scene& s,
-                std::vector<vec3>& vertices, vec3, std::size_t material_id)
+[[nodiscard]] vec3 safe_normalize(vec3 v)
 {
-  std::vector<int> indices;
+  const float len_sq = glm::dot(v, v);
+  if (len_sq <= kNormalEpsLen2)
+    return vec3{0.f, 0.f, 0.f};
+  return v * glm::inversesqrt(len_sq);
+}
+
+[[nodiscard]] face_vertex_ref parse_face_token(std::string_view token,
+                                               std::size_t vertex_count,
+                                               std::size_t normal_count)
+{
+  const auto first_slash = token.find('/');
+  const auto second_slash =
+      first_slash == std::string_view::npos
+          ? std::string_view::npos
+          : token.find('/', first_slash + 1);
+
+  const auto vertex_part = token.substr(0, first_slash);
+  if (vertex_part.empty())
+    throw std::runtime_error{"obj parser: malformed face vertex index"};
+
+  const int raw_vertex = std::stoi(std::string{vertex_part});
+  const int vertex_idx = obj_to_zero_based(raw_vertex, vertex_count);
+  if (vertex_idx < 0 || vertex_idx >= static_cast<int>(vertex_count))
+  {
+    throw std::runtime_error{
+        std::format("obj parser: vertex index {} out of range", raw_vertex)};
+  }
+
+  int normal_idx = kMissingIndex;
+  if (second_slash != std::string_view::npos && second_slash + 1 < token.size())
+  {
+    const auto normal_part = token.substr(second_slash + 1);
+    const int raw_normal = std::stoi(std::string{normal_part});
+    normal_idx = obj_to_zero_based(raw_normal, normal_count);
+    if (normal_idx < 0 || normal_idx >= static_cast<int>(normal_count))
+    {
+      throw std::runtime_error{
+          std::format("obj parser: normal index {} out of range", raw_normal)};
+    }
+  }
+
+  return face_vertex_ref{.vertex_idx = vertex_idx, .normal_idx = normal_idx};
+}
+
+void parse_face(std::istringstream& ss, std::size_t vertex_count,
+                std::size_t normal_count, std::vector<face_polygon>& faces)
+{
+  face_polygon refs;
   std::string token;
-
-  while (line_stream >> token)
+  while (ss >> token)
   {
-    int idx =
-        std::stoi(token.substr(0, token.find('/'))) - 1; // OBJ is 1-indexed
-    if (idx < 0 || idx >= static_cast<int>(vertices.size()))
-      return;
-    indices.push_back(idx);
+    refs.push_back(parse_face_token(token, vertex_count, normal_count));
   }
-
-  // Need at least 3 vertices
-  if (indices.size() < 3)
-    return;
-
-  // Fan triangulation
-  for (std::size_t i = 1; i + 1 < indices.size(); ++i)
-  {
-    s.mesh_triangles.push_back(cg::triangle(vertices.at(indices[0]),
-                                            vertices.at(indices[i]),
-                                            vertices.at(indices[i + 1])));
-  }
+  if (refs.size() >= 3)
+    faces.push_back(std::move(refs));
 }
 
-static const std::unordered_map<std::string,
-                                void (*)(std::istringstream&, scene&,
-                                         std::vector<vec3>&, vec3, std::size_t)>
-    token_map{
-        {"v", &parse_vertex},
-        {"f", &parse_face},
-    };
+[[nodiscard]] vec3 face_normal(const vec3& a, const vec3& b, const vec3& c)
+{
+  return safe_normalize(glm::cross(b - a, c - a));
+}
+} // namespace
+
 void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
                              std::size_t material_id)
 {
   std::println("loading obj: {}", filename);
   std::ifstream f{filename};
-  if (not f.is_open())
+  if (!f.is_open())
   {
     throw std::runtime_error{std::format("obj file ({}) not found", filename)};
   }
   if (material_id >= s.materials.size())
-    throw std::runtime_error{"material out of bounds"};
-  std::string line;
+  {
+    throw std::runtime_error{"obj parser: material out of bounds"};
+  }
+
   std::vector<vec3> vertices;
-  auto current_obj_number = s.mesh_triangles.size();
+  std::vector<vec3> obj_normals;
+  std::vector<face_polygon> faces;
+  std::string line;
   while (std::getline(f, line))
   {
     parse_utils::trim_line(line);
     if (parse_utils::should_skip_line(line))
-    {
       continue;
-    }
+
     std::istringstream ss(line);
     std::string type;
     ss >> type;
-    if (not token_map.count(type))
+    if (type == "v")
     {
+      vertices.push_back(parse_vec3(ss) - origin);
       continue;
     }
-    token_map.at(type)(ss, s, vertices, origin, material_id);
+    if (type == "vn")
+    {
+      obj_normals.push_back(safe_normalize(parse_vec3(ss)));
+      continue;
+    }
+    if (type == "f")
+    {
+      parse_face(ss, vertices.size(), obj_normals.size(), faces);
+    }
   }
+
+  std::vector<vec3> generated_normals(vertices.size(), vec3{0.f, 0.f, 0.f});
+  for (const auto& face : faces)
+  {
+    for (std::size_t i = 1; i + 1 < face.size(); ++i)
+    {
+      const vec3& a = vertices.at(face[0].vertex_idx);
+      const vec3& b = vertices.at(face[i].vertex_idx);
+      const vec3& c = vertices.at(face[i + 1].vertex_idx);
+      const vec3 fn = face_normal(a, b, c);
+      generated_normals[face[0].vertex_idx] += fn;
+      generated_normals[face[i].vertex_idx] += fn;
+      generated_normals[face[i + 1].vertex_idx] += fn;
+    }
+  }
+  for (auto& n : generated_normals)
+    n = safe_normalize(n);
+
+  const auto first_tri = s.mesh_triangles.size();
+  for (const auto& face : faces)
+  {
+    for (std::size_t i = 1; i + 1 < face.size(); ++i)
+    {
+      const auto& f0 = face[0];
+      const auto& f1 = face[i];
+      const auto& f2 = face[i + 1];
+
+      const vec3& p0 = vertices.at(f0.vertex_idx);
+      const vec3& p1 = vertices.at(f1.vertex_idx);
+      const vec3& p2 = vertices.at(f2.vertex_idx);
+
+      const vec3 fallback = face_normal(p0, p1, p2);
+      auto pick_normal = [&](const face_vertex_ref& ref) {
+        if (ref.normal_idx >= 0)
+          return obj_normals.at(ref.normal_idx);
+        const vec3 generated = generated_normals.at(ref.vertex_idx);
+        if (glm::dot(generated, generated) > kNormalEpsLen2)
+          return generated;
+        return fallback;
+      };
+
+      s.mesh_triangles.push_back(triangle{
+          .p0 = p0,
+          .p1 = p1,
+          .p2 = p2,
+          .n0 = pick_normal(f0),
+          .n1 = pick_normal(f1),
+          .n2 = pick_normal(f2),
+          .has_vertex_normals = true,
+          .material_id = material_id,
+      });
+    }
+  }
+
+  const auto tri_count = s.mesh_triangles.size() - first_tri;
   std::println("done loading model (vertex count: {}, face count: {})",
-               vertices.size(), s.mesh_triangles.size() - current_obj_number);
-  mesh3d& new_mesh = std::get<mesh3d>(s.objects.emplace_back(
-      mesh3d{current_obj_number, s.mesh_triangles.size() - current_obj_number,
-             material_id}));
+               vertices.size(), tri_count);
+
+  mesh3d& new_mesh = std::get<mesh3d>(
+      s.objects.emplace_back(mesh3d{first_tri, tri_count, material_id}));
   build_bvh(new_mesh.blas, std::span{s.mesh_triangles}.subspan(
                                new_mesh.vertex_start, new_mesh.vertex_count));
 }
@@ -105,13 +209,9 @@ void parse_obj_file(std::istringstream& ss, scene& s)
   vec3 origin{0, 0, 0};
   float ox{}, oy{}, oz{};
   if (ss >> ox >> oy >> oz)
-  {
     origin = vec3{ox, oy, oz};
-  }
   else
-  {
     ss.clear();
-  }
 
   std::size_t material_id = 0;
   if (ss >> material_id)

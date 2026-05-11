@@ -5,11 +5,10 @@ namespace cg
 
 std::optional<hitevent> get_ray_sphere_hit(const sphere& s, ray r, interval i)
 {
-  const auto& [radius, pos] = s;
-  const auto dir_to_sphere = pos - r.pos;
+  const auto dir_to_sphere = s.pos - r.pos;
   auto a = glm::length2(r.dir);
   auto h = glm::dot(r.dir, dir_to_sphere);
-  auto c = glm::length2(dir_to_sphere) - radius * radius;
+  auto c = glm::length2(dir_to_sphere) - s.radius * s.radius;
 
   auto discriminant = h * h - a * c;
 
@@ -23,12 +22,12 @@ std::optional<hitevent> get_ray_sphere_hit(const sphere& s, ray r, interval i)
   {
     return std::nullopt;
   }
-  auto normal = glm::normalize((r.at(t) - pos) / radius);
+  auto normal = glm::normalize((r.at(t) - s.pos) / s.radius);
   if (glm::dot(normal, r.dir) > 0.f)
   {
     normal = -normal;
   }
-  return hitevent{t, r.at(t), normal, 0};
+  return hitevent{t, r.at(t), normal, s.material_id};
 }
 
 } // namespace cg
