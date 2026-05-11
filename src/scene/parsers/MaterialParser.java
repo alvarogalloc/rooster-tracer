@@ -1,6 +1,7 @@
 package scene.parsers;
 
 import java.awt.Color;
+import scene.Material;
 import scene.Scene;
 
 public class MaterialParser {
@@ -14,7 +15,7 @@ public class MaterialParser {
       int r = Integer.parseInt(tokens[1]);
       int g = Integer.parseInt(tokens[2]);
       int b = Integer.parseInt(tokens[3]);
-      scene.addMaterial(new Color(r, g, b));
+      scene.addMaterial(Material.fromAlbedo(new Color(r, g, b)));
     } catch (NumberFormatException e) {
       System.err.println("Error parsing material: " + e.getMessage());
     }

@@ -1,17 +1,16 @@
 package objects;
-import java.awt.Color;
 import java.util.Optional;
 import math.*;
 
 public class Sphere implements Object3D {
   private final Vector3D center;
   private final float radius;
-  private final Color color;
+  private final int materialId;
 
-  public Sphere(Vector3D center, float radius, Color color) {
+  public Sphere(Vector3D center, float radius, int materialId) {
     this.center = center;
     this.radius = radius;
-    this.color = color;
+    this.materialId = materialId;
   }
 
   public Vector3D getCenter() {
@@ -20,11 +19,6 @@ public class Sphere implements Object3D {
 
   public float getRadius() {
     return radius;
-  }
-
-  @Override
-  public Color getColor() {
-    return color;
   }
 
   @Override
@@ -52,7 +46,7 @@ public class Sphere implements Object3D {
     if (normal.dot(ray.getDir()) > 0f) {
       normal = normal.mul(-1f);
     }
-    return Optional.of(new Intersection(hitPoint, normal, t));
+    return Optional.of(new Intersection(hitPoint, normal, t, materialId));
   }
 
 }

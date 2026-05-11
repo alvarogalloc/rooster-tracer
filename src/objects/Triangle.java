@@ -1,6 +1,5 @@
 package objects;
 
-import java.awt.Color;
 import java.util.Optional;
 import math.Intersection;
 import math.Interval;
@@ -8,24 +7,38 @@ import math.Matrix3;
 import math.Ray;
 import math.Vector3D;
 
-public class Triangle  implements  Object3D{
-    Vector3D p0;
-    Vector3D p1;
-    Vector3D p2;
-    Color color;
-    
+public class Triangle implements Object3D {
+    private static final float NORMAL_EPSILON = 1e-12f;
+    private final Vector3D p0;
+    private final Vector3D p1;
+    private final Vector3D p2;
+    private final Vector3D n0;
+    private final Vector3D n1;
+    private final Vector3D n2;
+    private final boolean hasVertexNormals;
+    private final int materialId;
 
-    public Triangle(Vector3D p0, Vector3D p1, Vector3D p2, Color color) {
+    public Triangle(Vector3D p0, Vector3D p1, Vector3D p2, int materialId) {
+        this(p0, p1, p2, new Vector3D(0, 0, 0), new Vector3D(0, 0, 0), new Vector3D(0, 0, 0), false, materialId);
+    }
+
+    public Triangle(Vector3D p0, Vector3D p1, Vector3D p2, Vector3D n0, Vector3D n1, Vector3D n2, int materialId) {
+        this(p0, p1, p2, n0, n1, n2, true, materialId);
+    }
+
+    private Triangle(Vector3D p0, Vector3D p1, Vector3D p2, Vector3D n0, Vector3D n1, Vector3D n2,
+            boolean hasVertexNormals, int materialId) {
         this.p0 = p0;
         this.p1 = p1;
         this.p2 = p2;
-        this.color = color;
+        this.n0 = n0;
+        this.n1 = n1;
+        this.n2 = n2;
+        this.hasVertexNormals = hasVertexNormals;
+        this.materialId = materialId;
     }
+
     @Override
-    public Color getColor() {
-        return color;
-    }
-@Override
     public Optional<Intersection> isHit(Ray ray, Interval tRange) {
         // col0 = -ray.direction
         Vector3D col0 = ray.getDir().mul(-1);
@@ -65,11 +78,21 @@ public class Triangle  implements  Object3D{
         // Intersection confirmed
         Vector3D hitPoint = ray.at(t);
         
-        Vector3D normal = col1.cross(col2).normalize();
+        final float baryU = u;
+        final float baryV = v;
+        final float baryW = 1f - baryU - baryV;
+        Vector3D faceNormal = col1.cross(col2).normalize();
+        Vector3D normal = faceNormal;
+        if (hasVertexNormals) {
+            normal = n0.mul(baryW).add(n1.mul(baryU)).add(n2.mul(baryV)).normalize();
+            if (normal.lengthSquared() <= NORMAL_EPSILON) {
+                normal = faceNormal;
+            }
+        }
         if (normal.dot(ray.getDir()) > 0f) {
             normal = normal.mul(-1f);
         }
 
-        return Optional.of(new Intersection(hitPoint, normal, t));
+        return Optional.of(new Intersection(hitPoint, normal, t, materialId));
     }
 }
