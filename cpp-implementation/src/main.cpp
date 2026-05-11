@@ -13,7 +13,7 @@ int main(int argc, char** argv)
   auto cam = camera{
       .width = 1920,
       .height = 1080,
-      .fov = std::numbers::pi_v<float> / 4, // 45° — tight enough to fill frame
+      .fov = std::numbers::pi_v<float> / 3, // 45° — tight enough to fill frame
       .pos = vec3{0.4f, 0.65f,
                   1.4f}, // elevated, slightly to the right, pulled back
       .up = vec3{0.f, 1.f, 0.f},

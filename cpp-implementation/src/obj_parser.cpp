@@ -67,6 +67,8 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
   {
     throw std::runtime_error{std::format("obj file ({}) not found", filename)};
   }
+  if (material_id >= s.materials.size())
+    throw std::runtime_error{"material out of bounds"};
   std::string line;
   std::vector<vec3> vertices;
   auto current_obj_number = s.mesh_triangles.size();
@@ -88,8 +90,9 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
   }
   std::println("done loading model (vertex count: {}, face count: {})",
                vertices.size(), s.mesh_triangles.size() - current_obj_number);
-  mesh3d& new_mesh = std::get<mesh3d>(s.objects.emplace_back(mesh3d{
-      current_obj_number, s.mesh_triangles.size() - current_obj_number, 0}));
+  mesh3d& new_mesh = std::get<mesh3d>(s.objects.emplace_back(
+      mesh3d{current_obj_number, s.mesh_triangles.size() - current_obj_number,
+             material_id}));
   build_bvh(new_mesh.blas, std::span{s.mesh_triangles}.subspan(
                                new_mesh.vertex_start, new_mesh.vertex_count));
 }
