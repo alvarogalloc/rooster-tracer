@@ -1,13 +1,16 @@
 export module raytracer;
 import camera;
 import color_rgb;
+import triangle;
+import mesh3d;
+import sphere;
 import directional_light;
 import material;
 import stb;
-import object3d;
 import hitevent;
 import scene;
 import vec3;
+import plane;
 import ray;
 import interval;
 import std;
@@ -59,6 +62,10 @@ struct raytracer
           std::format("saveImage: failed to write '{}'", path));
     }
   }
+  template <class... Ts> struct overload : Ts...
+  {
+    using Ts::operator()...;
+  };
 
   color_rgb trace_ray(ray ray, int depth)
   {
@@ -71,9 +78,17 @@ struct raytracer
     const interval i{ctx.camera_.near, ctx.camera_.far};
     for (const auto& obj : ctx.scene_.objects)
     {
-      if (not bool(obj))
-        continue;
-      std::optional<hitevent> hit = obj->get_hit(ray, i);
+      std::optional<hitevent> hit = [&] {
+        return obj.visit(overload{
+            [&](const triangle& tri) {
+              return get_ray_triangle_hit(tri, ray, i);
+            },
+            [&](const sphere& sph) { return get_ray_sphere_hit(sph, ray, i); },
+            [&](const mesh3d& mesh) { return get_ray_mesh_hit(mesh, ray, i); },
+            [&](const plane& p) { return get_ray_plane_hit(p, ray, i); },
+        });
+      }();
+
       if (hit)
       {
         if (not closest_hit or (hit.value().t < closest_hit.value().t))
@@ -84,6 +99,7 @@ struct raytracer
     }
     if (!closest_hit)
     {
+
       return ctx.bg_color;
     }
 
@@ -96,8 +112,8 @@ struct raytracer
 
     const std::size_t material_id =
         closest_hit->m_id < ctx.scene_.materials.size() ? closest_hit->m_id : 0;
-    return shade(ctx.scene_.materials.at(material_id), *closest_hit, *sun,
-                 {0, 0, 0});
+    return shade_flat(ctx.scene_.materials.at(material_id), *closest_hit, *sun,
+                      {0, 0, 0});
   }
 
   void render()

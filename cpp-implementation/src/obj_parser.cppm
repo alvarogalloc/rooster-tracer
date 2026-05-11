@@ -1,7 +1,6 @@
 export module obj_parser;
 import std;
 import scene;
-import object3d;
 export namespace cg
 {
 namespace parsers

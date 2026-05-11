@@ -2,6 +2,7 @@
 module common_parsers;
 import triangle;
 import sphere;
+import plane;
 namespace cg
 {
 namespace parse_utils
@@ -58,9 +59,9 @@ void parse_sphere(std::istringstream& ss, scene& s)
 
   const color_rgb col = parse_color(ss);
 
-  const auto material_id = add_inline_material(s, col);
-  s.objects.push_back(
-      std::make_unique<sphere>(radius, center, col, material_id));
+  // const auto material_id = add_inline_material(s, col);
+  // s.objects.push_back(
+  //     std::make_unique<sphere>(radius, center, col, material_id));
 }
 void parse_triangle(std::istringstream& ss, scene& s)
 {
@@ -72,7 +73,19 @@ void parse_triangle(std::istringstream& ss, scene& s)
   const color_rgb col = parse_color(ss);
   const auto material_id = add_inline_material(s, col);
 
-  s.objects.push_back(std::make_unique<triangle>(v0, v1, v2, col, material_id));
+  s.objects.push_back(triangle{v0, v1, v2});
+}
+void parse_plane(std::istringstream& ss, scene& s)
+{
+  // plane px py pz nx ny nz
+  const vec3 p = parse_vec3(ss);
+  const vec3 n = parse_vec3(ss);
+
+  std::size_t material_id;
+  ss >> material_id;
+
+  s.objects.push_back(
+      plane{.normal = n, .point = p, .material_id = material_id});
 }
 
 } // namespace parsers

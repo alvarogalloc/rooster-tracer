@@ -2,20 +2,17 @@ module triangle;
 import glm;
 import interval;
 
-using namespace cg;
-inline auto v(vec3 vec)
-{
-  return glm::vec3{vec.x, vec.y, vec.z};
-}
 namespace cg
 {
-std::optional<hitevent> triangle::get_hit(ray r, interval i) const
+std::optional<hitevent> get_ray_triangle_hit(const triangle& tt, ray r,
+                                             interval i)
 {
+  const auto& [p0, p1, p2] = tt;
   using glm::mat3;
-  const auto col0 = v(-r.dir);
-  const auto col1 = v(p1 - p0);
-  const auto col2 = v(p2 - p0);
-  const auto col3 = v(r.pos - p0);
+  const auto col0 = -r.dir;
+  const auto col1 = p1 - p0;
+  const auto col2 = p2 - p0;
+  const auto col3 = r.pos - p0;
 
   const auto d0 = glm::determinant(mat3{col0, col1, col2});
   const interval close_to_zero{-1e-4, 1e-4};
@@ -43,12 +40,11 @@ std::optional<hitevent> triangle::get_hit(ray r, interval i) const
   hit.t = t;
   hit.p = r.at(t);
   auto normal = glm::normalize(glm::cross(col1, col2));
-  if (glm::dot(normal, v(r.dir)) > 0.f)
+  if (glm::dot(normal, r.dir) > 0.f)
   {
     normal = -normal;
   }
   hit.normal = vec3{normal.x, normal.y, normal.z};
-  hit.m_id = material_id;
   return hit;
 }
 

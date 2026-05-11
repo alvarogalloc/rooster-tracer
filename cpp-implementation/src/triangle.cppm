@@ -1,6 +1,5 @@
 export module triangle;
 import vec3;
-import object3d;
 import std;
 import ray;
 import hitevent;
@@ -9,18 +8,12 @@ import color_rgb;
 
 export namespace cg
 {
-struct triangle : object3d
+struct triangle
 {
-  triangle(vec3 p0, vec3 p1, vec3 p2, color_rgb c, std::size_t material_id = 0)
-      : p0(p0), p1(p1), p2(p2), color_(c)
-  {
-    this->material_id = material_id;
-  }
   vec3 p0;
   vec3 p1;
   vec3 p2;
-  color_rgb color_;
-  std::optional<hitevent> get_hit(ray, interval) const override;
 };
 
+std::optional<hitevent> get_ray_triangle_hit(const triangle&, ray, interval);
 } // namespace cg

@@ -10,16 +10,6 @@ import scene_parser;
 int main(int argc, char** argv)
 {
   using namespace cg;
-  // auto cam = camera{
-  //     .width = 400,
-  //     .height = 400,
-  //     .fov = std::numbers::pi_v<float> / 2,
-  //     .pos = vec3{0, 0, 0},
-  //     .up = vec3{0, 1, 0},
-  //     .lookAt = vec3{0, 0, -1},
-  //     .far = 1000.f,
-  //     .near = 0.01f,
-  // };
   auto cam = camera{
       .width = 1920,
       .height = 1080,

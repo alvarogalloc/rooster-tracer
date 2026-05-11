@@ -1,6 +1,8 @@
 module obj_parser;
 import vec3;
 import common_parsers;
+import mesh3d;
+import aabb;
 import triangle;
 import color_rgb;
 
@@ -23,21 +25,29 @@ void parse_vertex(std::istringstream& ss, scene&, std::vector<vec3>& vertices,
 void parse_face(std::istringstream& line_stream, scene& s,
                 std::vector<vec3>& vertices, vec3, std::size_t material_id)
 {
-  std::array<int, 3> indices{};
-  for (auto& idx : indices)
+  std::vector<int> indices;
+  std::string token;
+
+  while (line_stream >> token)
   {
-    std::string token;
-    line_stream >> token;
-    // OBJ supports a lot of variant, for now we only take the index of the
-    // vertex
-    idx = std::stoi(token.substr(0, token.find('/'))) - 1; // OBJ is 1-indexed
+    int idx =
+        std::stoi(token.substr(0, token.find('/'))) - 1; // OBJ is 1-indexed
     if (idx < 0 || idx >= static_cast<int>(vertices.size()))
       return;
+    indices.push_back(idx);
   }
 
-  s.objects.push_back(std::make_unique<cg::triangle>(
-      vertices.at(indices[0]), vertices.at(indices[1]), vertices.at(indices[2]),
-      color_rgb{}, material_id));
+  // Need at least 3 vertices
+  if (indices.size() < 3)
+    return;
+
+  // Fan triangulation
+  for (std::size_t i = 1; i + 1 < indices.size(); ++i)
+  {
+    s.triangles.push_back(cg::triangle(vertices.at(indices[0]),
+                                       vertices.at(indices[i]),
+                                       vertices.at(indices[i + 1])));
+  }
 }
 
 static const std::unordered_map<std::string,
@@ -58,7 +68,7 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
   }
   std::string line;
   std::vector<vec3> vertices;
-  auto current_obj_number = s.objects.size();
+  auto current_obj_number = s.triangles.size();
   while (std::getline(f, line))
   {
     parse_utils::trim_line(line);
@@ -76,7 +86,10 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
     token_map.at(type)(ss, s, vertices, origin, material_id);
   }
   std::println("done loading model (vertex count: {}, face count: {})",
-               vertices.size(), s.objects.size() - current_obj_number);
+               vertices.size(), s.triangles.size() - current_obj_number);
+  s.objects.push_back(mesh3d{std::max(current_obj_number - 1, 0uz),
+                             s.triangles.size() - current_obj_number, 0});
+                             // compute_aabb(vertices)});
 }
 
 void parse_obj_file(std::istringstream& ss, scene& s)

@@ -1,0 +1,6 @@
+ROOSTERSCENEV1
+mat 247 200 65
+# plane point_xyz normal_xyz material_id
+dir_light -1 -1 0 255 255 255 0.7 
+plane 0 0 -1 1 0 0 0
+

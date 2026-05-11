@@ -3,9 +3,10 @@ import std;
 namespace cg
 {
 
-std::optional<hitevent> sphere::get_hit(ray r, interval i) const
+std::optional<hitevent> get_ray_sphere_hit(const sphere& s, ray r, interval i)
 {
-  const auto dir_to_sphere = this->pos - r.pos;
+  const auto& [radius, pos] = s;
+  const auto dir_to_sphere = pos - r.pos;
   auto a = glm::length2(r.dir);
   auto h = glm::dot(r.dir, dir_to_sphere);
   auto c = glm::length2(dir_to_sphere) - radius * radius;
@@ -27,7 +28,7 @@ std::optional<hitevent> sphere::get_hit(ray r, interval i) const
   {
     normal = -normal;
   }
-  return hitevent{t, r.at(t), normal, material_id};
+  return hitevent{t, r.at(t), normal, 0};
 }
 
 } // namespace cg
