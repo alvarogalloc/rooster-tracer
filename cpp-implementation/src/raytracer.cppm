@@ -84,7 +84,9 @@ struct raytracer
               return get_ray_triangle_hit(tri, ray, i);
             },
             [&](const sphere& sph) { return get_ray_sphere_hit(sph, ray, i); },
-            [&](const mesh3d& mesh) { return get_ray_mesh_hit(mesh, ray, i); },
+            [&](const mesh3d& mesh) {
+              return get_ray_mesh_hit(mesh, ctx.scene_.mesh_triangles, ray, i);
+            },
             [&](const plane& p) { return get_ray_plane_hit(p, ray, i); },
         });
       }();

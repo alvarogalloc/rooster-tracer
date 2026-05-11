@@ -3,6 +3,7 @@ import vec3;
 import common_parsers;
 import mesh3d;
 import aabb;
+import bvh;
 import triangle;
 import color_rgb;
 
@@ -44,9 +45,9 @@ void parse_face(std::istringstream& line_stream, scene& s,
   // Fan triangulation
   for (std::size_t i = 1; i + 1 < indices.size(); ++i)
   {
-    s.triangles.push_back(cg::triangle(vertices.at(indices[0]),
-                                       vertices.at(indices[i]),
-                                       vertices.at(indices[i + 1])));
+    s.mesh_triangles.push_back(cg::triangle(vertices.at(indices[0]),
+                                            vertices.at(indices[i]),
+                                            vertices.at(indices[i + 1])));
   }
 }
 
@@ -68,7 +69,7 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
   }
   std::string line;
   std::vector<vec3> vertices;
-  auto current_obj_number = s.triangles.size();
+  auto current_obj_number = s.mesh_triangles.size();
   while (std::getline(f, line))
   {
     parse_utils::trim_line(line);
@@ -86,10 +87,11 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
     token_map.at(type)(ss, s, vertices, origin, material_id);
   }
   std::println("done loading model (vertex count: {}, face count: {})",
-               vertices.size(), s.triangles.size() - current_obj_number);
-  s.objects.push_back(mesh3d{std::max(current_obj_number - 1, 0uz),
-                             s.triangles.size() - current_obj_number, 0});
-                             // compute_aabb(vertices)});
+               vertices.size(), s.mesh_triangles.size() - current_obj_number);
+  mesh3d& new_mesh = std::get<mesh3d>(s.objects.emplace_back(mesh3d{
+      current_obj_number, s.mesh_triangles.size() - current_obj_number, 0}));
+  build_bvh(new_mesh.blas, std::span{s.mesh_triangles}.subspan(
+                               new_mesh.vertex_start, new_mesh.vertex_count));
 }
 
 void parse_obj_file(std::istringstream& ss, scene& s)

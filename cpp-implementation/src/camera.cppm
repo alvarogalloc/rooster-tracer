@@ -43,6 +43,7 @@ ray camera::compute_ray(int sx, int sy, vec3 forward, vec3 right, vec3 upVec)
 
 void camera::cast_all_rays(std::function<void(ray, int, int)> ray_callback)
 {
+#if 1
   const vec3 forward = glm::normalize(lookAt - pos);
   const vec3 right = glm::normalize(cross(forward, up));
   const vec3 upV = glm::normalize(cross(right, forward));
@@ -69,5 +70,36 @@ void camera::cast_all_rays(std::function<void(ray, int, int)> ray_callback)
     }
   }
   std::println(""); // newline after final 100%
+
+#else
+  const vec3 forward = glm::normalize(lookAt - pos);
+  const vec3 right = glm::normalize(glm::cross(forward, up));
+  const vec3 upV = glm::normalize(glm::cross(right, forward));
+
+  const auto threadCount = std::thread::hardware_concurrency();
+  const auto rowsPerThread = height / threadCount;
+
+  auto worker = [&](int yStart, int yEnd) {
+    for (int y = yStart; y < yEnd; y++)
+      for (int x = 0; x < width; x++)
+      {
+        const auto ray = compute_ray(x, y, forward, right, upV);
+        ray_callback(ray, x, y);
+      }
+  };
+
+  std::vector<std::thread> threads;
+  threads.reserve(threadCount);
+
+  for (auto i = 0u; i < threadCount; i++)
+  {
+    const int yStart = i * rowsPerThread;
+    const int yEnd = (i == threadCount - 1) ? height : yStart + rowsPerThread;
+    threads.emplace_back(worker, yStart, yEnd);
+  }
+
+  for (auto& t : threads)
+    t.join();
+#endif
 }
 } // namespace cg
