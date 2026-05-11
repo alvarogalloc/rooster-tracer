@@ -4,7 +4,9 @@ import color_rgb;
 import triangle;
 import mesh3d;
 import sphere;
+import light;
 import directional_light;
+import point_light;
 import material;
 import stb;
 import hitevent;
@@ -67,6 +69,48 @@ struct raytracer
     using Ts::operator()...;
   };
 
+  [[nodiscard]] std::optional<hitevent> find_closest_hit(ray r) const
+  {
+    std::optional<hitevent> closest_hit;
+    const interval hit_range{ctx.camera_.near, ctx.camera_.far};
+    for (const auto& obj : ctx.scene_.objects)
+    {
+      std::optional<hitevent> hit = [&] {
+        return obj.visit(overload{
+            [&](const triangle& tri) { return get_ray_triangle_hit(tri, r, hit_range); },
+            [&](const sphere& sph) { return get_ray_sphere_hit(sph, r, hit_range); },
+            [&](const mesh3d& mesh) {
+              return get_ray_mesh_hit(mesh, ctx.scene_.mesh_triangles, r, hit_range);
+            },
+            [&](const plane& p) { return get_ray_plane_hit(p, r, hit_range); },
+        });
+      }();
+
+      if (!hit || (closest_hit && hit->t >= closest_hit->t))
+        continue;
+      closest_hit = hit;
+    }
+    return closest_hit;
+  }
+
+  [[nodiscard]] color_rgb shade_hit(const hitevent& hit, vec3 view_dir) const
+  {
+    const std::size_t material_id = hit.m_id < ctx.scene_.materials.size() ? hit.m_id : 0;
+    const material& m = ctx.scene_.materials.at(material_id);
+    color_rgb result = m.ambient;
+    for (const auto& light_ : ctx.scene_.lights)
+    {
+      result += std::visit(
+          overload{
+              [&](const dummy_light&) { return color_rgb{}; },
+              [&](const directional_light& l) { return shade_phong(m, hit, l, view_dir); },
+              [&](const point_light& l) { return shade_phong(m, hit, l, view_dir); },
+          },
+          light_);
+    }
+    return result;
+  }
+
   color_rgb trace_ray(ray ray, int depth)
   {
     if (depth <= 0)
@@ -74,48 +118,13 @@ struct raytracer
       return ctx.bg_color;
     }
 
-    std::optional<hitevent> closest_hit;
-    const interval i{ctx.camera_.near, ctx.camera_.far};
-    for (const auto& obj : ctx.scene_.objects)
-    {
-      std::optional<hitevent> hit = [&] {
-        return obj.visit(overload{
-            [&](const triangle& tri) {
-              return get_ray_triangle_hit(tri, ray, i);
-            },
-            [&](const sphere& sph) { return get_ray_sphere_hit(sph, ray, i); },
-            [&](const mesh3d& mesh) {
-              return get_ray_mesh_hit(mesh, ctx.scene_.mesh_triangles, ray, i);
-            },
-            [&](const plane& p) { return get_ray_plane_hit(p, ray, i); },
-        });
-      }();
-
-      if (hit)
-      {
-        if (not closest_hit or (hit.value().t < closest_hit.value().t))
-        {
-          closest_hit = hit.value();
-        }
-      }
-    }
+    const auto closest_hit = find_closest_hit(ray);
     if (!closest_hit)
     {
-
       return ctx.bg_color;
     }
 
-    const auto* sun =
-        std::get_if<directional_light>(&ctx.scene_.lights.front());
-    if (!sun)
-    {
-      throw std::runtime_error{"first light is not directional_light"};
-    }
-
-    const std::size_t material_id =
-        closest_hit->m_id < ctx.scene_.materials.size() ? closest_hit->m_id : 0;
-    return shade_flat(ctx.scene_.materials.at(material_id), *closest_hit, *sun,
-                      {0, 0, 0});
+    return shade_hit(*closest_hit, -ray.dir);
   }
 
   void render()
@@ -127,7 +136,7 @@ struct raytracer
     }
     if (ctx.scene_.materials.empty())
     {
-      ctx.scene_.materials.emplace_back(material{color_rgb{1.f, 1.f, 1.f}});
+      ctx.scene_.materials.emplace_back(make_phong_material(color_rgb{1.f, 1.f, 1.f}));
     }
     ctx.camera_.cast_all_rays([this](auto ray, auto x, auto y) {
       color_rgb color = trace_ray(ray, ctx.maxDepth);

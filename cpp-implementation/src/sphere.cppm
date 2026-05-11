@@ -13,7 +13,7 @@ struct sphere
 {
   float radius;
   vec3 pos;
-  // color_rgb color() const override { return color_; }
+  std::size_t material_id{0};
 };
 
    std::optional<hitevent> get_ray_sphere_hit(const sphere&, ray, interval);

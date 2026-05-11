@@ -22,14 +22,35 @@ void trim_line(std::string& s)
 
 namespace parsers
 {
+namespace
+{
+constexpr float kMaterialEqEps = 1e-8f;
+
+[[nodiscard]] bool same_color(color_rgb a, color_rgb b)
+{
+  return glm::length2(vec3{a - b}) <= kMaterialEqEps;
+}
+
+[[nodiscard]] bool same_material(const material& a, const material& b)
+{
+  return same_color(a.ambient, b.ambient) &&
+         same_color(a.specular, b.specular) &&
+         same_color(a.diffuse, b.diffuse) &&
+         std::abs(a.shininess - b.shininess) <= kMaterialEqEps;
+}
+} // namespace
+
 std::size_t add_inline_material(scene& s, const color_rgb& albedo)
 {
-  auto it = std::ranges::find(s.materials, material{albedo});
-  if (it != s.materials.end())
+  const material m = make_phong_material(albedo);
+  const auto it = std::ranges::find_if(s.materials, [&](const material& c) {
+    return same_material(c, m);
+  });
+  if (it != s.materials.cend())
   {
     return std::distance(std::begin(s.materials), it);
   }
-  s.materials.emplace_back(albedo);
+  s.materials.emplace_back(m);
   return s.materials.size() - 1;
 }
 
@@ -58,10 +79,8 @@ void parse_sphere(std::istringstream& ss, scene& s)
   }
 
   const color_rgb col = parse_color(ss);
-
-  // const auto material_id = add_inline_material(s, col);
-  // s.objects.push_back(
-  //     std::make_unique<sphere>(radius, center, col, material_id));
+  const auto material_id = add_inline_material(s, col);
+  s.objects.push_back(sphere{radius, center, material_id});
 }
 void parse_triangle(std::istringstream& ss, scene& s)
 {
@@ -73,7 +92,12 @@ void parse_triangle(std::istringstream& ss, scene& s)
   const color_rgb col = parse_color(ss);
   const auto material_id = add_inline_material(s, col);
 
-  s.objects.push_back(triangle{v0, v1, v2});
+  s.objects.push_back(triangle{
+      .p0 = v0,
+      .p1 = v1,
+      .p2 = v2,
+      .material_id = material_id,
+  });
 }
 void parse_plane(std::istringstream& ss, scene& s)
 {

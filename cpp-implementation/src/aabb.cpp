@@ -16,8 +16,8 @@ aabb compute_span_aabb(std::span<const triangle> vertices,
 
   for (const auto i : indices)
   {
-    const auto [a, b, c] = vertices.at(i);
-    for (const auto v : {a, b, c})
+    const triangle& tri = vertices.at(i);
+    for (const auto v : {tri.p0, tri.p1, tri.p2})
     {
 
       box.min.x = std::min(box.min.x, v.x);
