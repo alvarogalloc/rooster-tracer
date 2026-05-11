@@ -1,5 +1,4 @@
 module scene_parser;
-import object3d;
 import triangle;
 import sphere;
 import vec3;
@@ -41,6 +40,7 @@ static const std::unordered_map<std::string,
         {"sphere", &parsers::parse_sphere},
         {"triangle", &parsers::parse_triangle},
         {"obj", &parsers::parse_obj_file},
+        {"plane", &parsers::parse_plane},
         {"mat", &parsers::parse_material},
         {"dir_light", &parsers::parse_dir_light},
     };

@@ -10,16 +10,18 @@ export namespace cg
 
 struct material
 {
-  color_rgb albedo;
-  // float roughness     = 1.0f;
-  // float metallic      = 0.0f;
+  auto operator<=>(const material&) const = default;
+  color_rgb ambient;
+  color_rgb specular;
+  color_rgb diffuse;
+  float shininess = 1.0f;
 };
-color_rgb shade(const material& m, const hitevent& he,
-                const directional_light& l, vec3)
+color_rgb shade_flat(const material& m, const hitevent& he,
+                     const directional_light& l, vec3)
 {
   const vec3 n = glm::normalize(he.normal);
   const float lambert = std::max(0.0f, glm::dot(n, -l.dir));
-  return color_rgb{l.radiance() * m.albedo * lambert};
+  return color_rgb{l.radiance() * m.ambient * lambert};
 }
 using material_collection = std::vector<material>;
 } // namespace cg
