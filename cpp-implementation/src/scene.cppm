@@ -6,6 +6,7 @@ import material;
 import triangle;
 import sphere;
 import mesh3d;
+import vec3;
 import plane;
 export namespace cg
 {
@@ -16,6 +17,6 @@ struct scene
   std::vector<primitive_t> objects{};
   light_collection lights{};
   material_collection materials{};
-  std::vector<triangle> triangles{};
+  std::vector<triangle> mesh_triangles{};
 };
 } // namespace cg

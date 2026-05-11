@@ -3,6 +3,7 @@ export module aabb;
 import std;
 import hitevent;
 import interval;
+import triangle;
 import ray;
 import vec3;
 
@@ -15,30 +16,7 @@ struct aabb
   vec3 max;
 };
 
-
-aabb compute_aabb(std::span<const vec3> vertices)
-{
-  auto inf = std::numeric_limits<float>::infinity();
-  aabb box{ .min = { inf,  inf,  inf },
-            .max = {-inf, -inf, -inf } };
-
-  for (const auto& v : vertices)
-  {
-    box.min.x = std::min(box.min.x, v.x);
-    box.min.y = std::min(box.min.y, v.y);
-    box.min.z = std::min(box.min.z, v.z);
-
-    box.max.x = std::max(box.max.x, v.x);
-    box.max.y = std::max(box.max.y, v.y);
-    box.max.z = std::max(box.max.z, v.z);
-  }
-
-  return box;
-}
-
-
-std::optional<hitevent> get_hit(const aabb&, ray, interval)
-{
-  return std::nullopt;
-}
+static_assert(sizeof(aabb) == 24, "aabb has unexpected padding");
+aabb compute_span_aabb(std::span<const triangle> triangles,std::span<const std::uint32_t>indices);
+bool is_ray_aabb_hit(const aabb&, ray, interval);
 } // namespace cg
