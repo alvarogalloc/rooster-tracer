@@ -74,6 +74,10 @@ std::optional<cg::hitevent> get_ray_mesh_hit(const mesh3d& mesh,
     }
   }
 
+  if (result)
+  {
+    result.value().m_id = mesh.material_id;
+  }
   return result;
 }
 } // namespace cg
