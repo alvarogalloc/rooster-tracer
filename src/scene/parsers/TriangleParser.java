@@ -36,12 +36,13 @@ public class TriangleParser {
       int r = Integer.parseInt(tokens[10]);
       int g = Integer.parseInt(tokens[11]);
       int b = Integer.parseInt(tokens[12]);
+      int materialId = scene.addInlineMaterial(new Color(r, g, b));
 
       Vector3D p0 = new Vector3D(x0, y0, z0);
       Vector3D p1 = new Vector3D(x1, y1, z1);
       Vector3D p2 = new Vector3D(x2, y2, z2);
 
-      scene.add(new Triangle(p0, p1, p2, new Color(r, g, b)));
+      scene.add(new Triangle(p0, p1, p2, materialId));
     } catch (NumberFormatException e) {
       System.err.println("Error parsing triangle: " + e.getMessage());
     }

@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.Map;
 import scene.parsers.DirectionalLightParser;
 import scene.parsers.MaterialParser;
+import scene.parsers.PlaneParser;
+import scene.parsers.PointLightParser;
 import scene.parsers.SphereParser;
 import scene.parsers.TriangleParser;
 import scene.parsers.ObjParser;
@@ -23,7 +25,9 @@ public class Parsers {
       "sphere", SphereParser::parseSphere,
       "triangle", TriangleParser::parseTriangle,
       "obj", ObjParser::parseObj,
+      "plane", PlaneParser::parsePlane,
       "mat", MaterialParser::parseMaterial,
-      "dir_light", DirectionalLightParser::parseDirectionalLight
+      "dir_light", DirectionalLightParser::parseDirectionalLight,
+      "point_light", PointLightParser::parsePointLight
   );
 }

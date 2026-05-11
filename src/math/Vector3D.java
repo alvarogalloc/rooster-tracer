@@ -40,6 +40,10 @@ public class Vector3D {
         return new Vector3D(this.x + other.x, this.y + other.y, this.z + other.z);
     }
 
+    public Vector3D sub(Vector3D other) {
+        return new Vector3D(this.x - other.x, this.y - other.y, this.z - other.z);
+    }
+
     public Vector3D mul(float t) {
         return new Vector3D(this.x * t, this.y * t, this.z * t);
     }
@@ -64,5 +68,9 @@ public class Vector3D {
             return new Vector3D(0, 0, 0); // no division by zero
         }
         return this.mul(1 / length);
+    }
+
+    public float lengthSquared() {
+        return this.dot(this);
     }
 }

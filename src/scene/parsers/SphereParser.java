@@ -33,8 +33,8 @@ public class SphereParser {
       int r = Integer.parseInt(tokens[5]);
       int g = Integer.parseInt(tokens[6]);
       int b = Integer.parseInt(tokens[7]);
-
-      scene.add(new Sphere(new Vector3D(x, y, z), radius, new Color(r, g, b)));
+      int materialId = scene.addInlineMaterial(new Color(r, g, b));
+      scene.add(new Sphere(new Vector3D(x, y, z), radius, materialId));
     } catch (NumberFormatException e) {
       System.err.println("Error parsing sphere: " + e.getMessage());
     }

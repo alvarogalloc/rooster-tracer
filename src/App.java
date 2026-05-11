@@ -15,8 +15,8 @@ public class App {
     String outputPath = args[1];
 
     Camera camera = new Camera(
-        400, 400,
-        (float) Math.toRadians(45),
+        1920, 1080,
+        3.1416f/3.f,
         new Vector3D(0.4f, 0.65f, 1.4f), // pos
         new Vector3D(0, 1, 0), // up
         new Vector3D(-0.037f, 0.458f, 0.192f), // lookAt
