@@ -76,7 +76,6 @@ void subdivide(cg::bvh& b, std::span<const cg::triangle> tris,
 }
 
 } // namespace
-// bool is_ray_aabb_hit(const aabb&, ray, interval);
 namespace cg
 {
 void build_bvh(bvh& b, std::span<const triangle> mesh_tris)
