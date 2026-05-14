@@ -1,5 +1,3 @@
-import java.awt.Color;
-import math.*;
 import scene.*;
 
 public class App {
@@ -14,19 +12,22 @@ public class App {
     String scenePath = args[0];
     String outputPath = args[1];
 
-    Camera camera = new Camera(
-        1920, 1080,
-        3.1416f/3.f,
-        new Vector3D(0.4f, 0.65f, 1.4f), // pos
-        new Vector3D(0, 1, 0), // up
-        new Vector3D(-0.037f, 0.458f, 0.192f), // lookAt
-        0.001f, // near plane
-        20f // far plane
-    );
-
     try {
       Scene scene = SceneParser.parseScene(scenePath);
-      RaytracerContext context = new RaytracerContext(scene, camera, new Color(10, 32, 90), 5);
+      String validationError = scene.validateForRender();
+      if (validationError != null) {
+        throw new IllegalStateException("scene validation failed: " + validationError);
+      }
+      Camera camera = new Camera(
+          scene.getImageWidth(),
+          scene.getImageHeight(),
+          scene.getFov(),
+          scene.getCameraPos(),
+          scene.getCameraUp(),
+          scene.getCameraLookAt(),
+          scene.getNearPlane(),
+          scene.getFarPlane());
+      RaytracerContext context = new RaytracerContext(scene, camera, scene.getBackground(), scene.getMaxDepth());
       Raytracer tracer = new Raytracer(context);
       tracer.run(outputPath);
       System.out.println(outputPath + " rendered correctly!!!");

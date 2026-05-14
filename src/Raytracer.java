@@ -12,6 +12,7 @@ import scene.Light;
 import scene.Material;
 
 public class Raytracer {
+  private static final float SHADOW_BIAS = 1e-3f;
   final private RaytracerContext context;
 
   public Raytracer(RaytracerContext context) {
@@ -60,22 +61,44 @@ public class Raytracer {
   private Color shadeHit(Intersection hit, Vector3D viewDir) {
     int materialId = hit.getMaterialId();
     if (materialId < 0 || materialId >= context.getScene().getMaterials().size()) {
-      materialId = 0;
+      throw new IllegalStateException("invalid material id " + materialId + " for hit event");
     }
     Material material = context.getScene().getMaterials().get(materialId);
 
     Vector3D result = material.getAmbient();
     for (Light light : context.getScene().getLights()) {
+      if (isInShadow(light, hit)) {
+        continue;
+      }
       result = result.add(light.shade(material, hit, viewDir));
     }
     return new Color(toByte(result.getX()), toByte(result.getY()), toByte(result.getZ()));
+  }
+
+  private boolean isInShadow(Light light, Intersection hit) {
+    Light.ShadowRay shadow = light.shadowRay(hit);
+    if (shadow.maxDistance() <= SHADOW_BIAS) {
+      return false;
+    }
+    float maxDistance = Float.isInfinite(shadow.maxDistance())
+        ? context.getCamera().getFarPlane()
+        : shadow.maxDistance() - SHADOW_BIAS;
+    if (maxDistance <= SHADOW_BIAS) {
+      return false;
+    }
+    Interval tRange = new Interval(SHADOW_BIAS, maxDistance);
+    for (Object3D obj : context.getScene().getObjects()) {
+      if (obj.isHit(shadow.ray(), tRange).isPresent()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void render() {
     if (this.context.getScene().getLights().isEmpty()) {
       throw new IllegalStateException("you should have at least one light!!");
     }
-    this.context.getScene().ensureDefaultMaterial();
     this.context.getCamera().castRays((ray, x, y) -> {
       Color color = traceRay(ray, this.context.getMaxDepth());
       // Set the color of the corresponding pixel in the image
