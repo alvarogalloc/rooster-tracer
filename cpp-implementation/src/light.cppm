@@ -7,14 +7,7 @@ import point_light;
 export namespace cg
 {
 
-struct dummy_light
-{
-  [[nodiscard]] auto radiance() const
-  {
-    return color_rgb{};
-  }
-};
 
-using light = std::variant<dummy_light, directional_light, point_light>;
+using light = std::variant< directional_light, point_light>;
 using light_collection = std::vector<light>;
 } // namespace cg

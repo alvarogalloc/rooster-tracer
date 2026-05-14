@@ -1,5 +1,5 @@
 export module ray;
-import vec3;
+import glm;
 import glm;
 export namespace cg
 {

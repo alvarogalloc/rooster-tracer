@@ -1,5 +1,5 @@
 export module plane;
-import vec3;
+import glm;
 import std;
 import hitevent;
 import interval;

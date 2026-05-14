@@ -1,15 +1,22 @@
 ROOSTERSCENEV1
-#obj triforce.obj
-#obj superstar.obj
-# obj stanford_bunny.obj
 
-# albedo lambert color: just a color
+# 04 - OBJ import showcase (local assets only)
+viewport 1920 1080
+fov 52
+camera 0 1.0 5.5   0 0 -2.2   0 1 0   0.001 120
+background 12 22 38
+max_depth 5
+
+# one explicit material for OBJ meshes (material_id = 0)
 mat 247 200 65
-# <dir> <color> <intensity>
-dir_light -1 -1 0 255 255 255 0.7 
 
-# obj beetle.obj 0 0 0 0
-# obj utah_teapot.obj 0 0 0 0
-obj /home/gallo/Documents/3DModels/bunny-hi-poly.obj 0 0 0 0
-# sphere 0 1 0 0.3 255 255 0
-# obj triforce.obj 0 0 0 0
+dir_light -0.8 -1 -0.4 255 255 255 0.7
+point_light 1.8 2.1 1.8 255 220 180 4.2
+
+# grounding plane uses material_id 0
+plane 0 -1.2 0  0 1 0  0
+
+# local OBJ models
+obj sample.obj 0 0.1 -4.0 0
+obj triforce.obj 2.1 -0.2 -6.4 0
+sphere -1.6 -0.5 -3.3 0.5 90 170 255

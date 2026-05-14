@@ -1,7 +1,7 @@
 export module camera;
 import color_rgb;
 import scene;
-import vec3;
+import glm;
 import std;
 import ray;
 export namespace cg
@@ -16,12 +16,12 @@ struct camera
   vec3 lookAt;
   float far;
   float near;
-  vec3 screen_to_ndc(int x, int y);
-  ray compute_ray(int x, int y, vec3 forward, vec3 right, vec3 upVec);
-  void cast_all_rays(std::function<void(ray, int, int)> ray_callback);
+  vec3 screen_to_ndc(int x, int y) const;
+  ray compute_ray(int x, int y, vec3 forward, vec3 right, vec3 upVec) const;
+  void cast_all_rays(std::function<void(ray, int, int)> ray_callback) const;
 };
 
-vec3 camera::screen_to_ndc(int x, int y)
+vec3 camera::screen_to_ndc(int x, int y) const
 {
   if (height == 0)
     return vec3{0, 0, 0};
@@ -33,7 +33,7 @@ vec3 camera::screen_to_ndc(int x, int y)
       0,
   };
 }
-ray camera::compute_ray(int sx, int sy, vec3 forward, vec3 right, vec3 upVec)
+ray camera::compute_ray(int sx, int sy, vec3 forward, vec3 right, vec3 upVec) const
 {
   const auto s_coord = screen_to_ndc(sx, sy);
   const auto dir =
@@ -41,9 +41,8 @@ ray camera::compute_ray(int sx, int sy, vec3 forward, vec3 right, vec3 upVec)
   return ray(pos, dir);
 }
 
-void camera::cast_all_rays(std::function<void(ray, int, int)> ray_callback)
+void camera::cast_all_rays(std::function<void(ray, int, int)> ray_callback) const
 {
-#if 1
   const vec3 forward = glm::normalize(lookAt - pos);
   const vec3 right = glm::normalize(cross(forward, up));
   const vec3 upV = glm::normalize(cross(right, forward));
@@ -70,36 +69,5 @@ void camera::cast_all_rays(std::function<void(ray, int, int)> ray_callback)
     }
   }
   std::println(""); // newline after final 100%
-
-#else
-  const vec3 forward = glm::normalize(lookAt - pos);
-  const vec3 right = glm::normalize(glm::cross(forward, up));
-  const vec3 upV = glm::normalize(glm::cross(right, forward));
-
-  const auto threadCount = std::thread::hardware_concurrency();
-  const auto rowsPerThread = height / threadCount;
-
-  auto worker = [&](int yStart, int yEnd) {
-    for (int y = yStart; y < yEnd; y++)
-      for (int x = 0; x < width; x++)
-      {
-        const auto ray = compute_ray(x, y, forward, right, upV);
-        ray_callback(ray, x, y);
-      }
-  };
-
-  std::vector<std::thread> threads;
-  threads.reserve(threadCount);
-
-  for (auto i = 0u; i < threadCount; i++)
-  {
-    const int yStart = i * rowsPerThread;
-    const int yEnd = (i == threadCount - 1) ? height : yStart + rowsPerThread;
-    threads.emplace_back(worker, yStart, yEnd);
-  }
-
-  for (auto& t : threads)
-    t.join();
-#endif
 }
 } // namespace cg

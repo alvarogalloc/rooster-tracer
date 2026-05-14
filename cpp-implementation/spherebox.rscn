@@ -1,0 +1,24 @@
+ROOSTERSCENEV1
+
+# 02 - Box room with multiple planes + point light falloff
+viewport 1920 1080
+fov 62
+camera 0 0.3 7.5   0 -1 -5.5   0 1 0   0.001 120
+background 8 8 12
+max_depth 5
+
+# base wall material for planes
+mat 185 185 190
+point_light 0 3.9 -4.2 255 255 245 16.0
+
+# room shell
+plane 0 -5 0    0 1 0    0
+plane 0 5 0     0 -1 0   0
+plane -5 0 0    1 0 0    0
+plane 5 0 0    -1 0 0    0
+plane 0 0 -10   0 0 1    0
+
+# colored spheres
+sphere -3 -3 -6 2 255 60 60
+sphere  0 -3 -3 2 80 255 110
+sphere  3 -3 -6 2 80 130 255

@@ -3,7 +3,7 @@ import std;
 import hitevent;
 import interval;
 import ray;
-import vec3;
+import glm;
 
 namespace cg
 {

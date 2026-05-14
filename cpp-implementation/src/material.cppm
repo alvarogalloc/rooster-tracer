@@ -1,6 +1,6 @@
 export module material;
 import std;
-import vec3;
+import glm;
 import color_rgb;
 import directional_light;
 import point_light;

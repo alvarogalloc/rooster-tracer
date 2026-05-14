@@ -1,4 +1,19 @@
 ROOSTERSCENEV1
+viewport 1920 1080
+fov 50
+camera 0 1.8 8.5   0 -0.3 -9.5   0 1 0   0.001 180
+background 9 20 38
+max_depth 5
+
+# 03 - Triangle world + hero props
+# explicit material for OBJ meshes/planes (material_id 0)
+mat 170 170 175
+# secondary accent material (material_id 1)
+mat 220 190 140
+
+dir_light -0.65 -1 -0.45 255 250 240 0.65
+point_light 1.5 3.8 -5.5 255 230 210 7.5
+
 # Format:
 # sphere x y z radius R G B
 # triangle x1 y1 z1  x2 y2 z2  x3 y3 z3  R G B
@@ -132,4 +147,4 @@ sphere -1 1.5 -7.5 0.25 80 200 255
 sphere  1 1.2 -8.5 0.20 255 140 60
 
 
-obj sample.obj
+obj sample.obj 0 0 -11.0 1

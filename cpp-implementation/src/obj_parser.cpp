@@ -1,5 +1,6 @@
 module obj_parser;
-import vec3;
+import std;
+import glm;
 import common_parsers;
 import mesh3d;
 import bvh;
@@ -92,6 +93,15 @@ void parse_face(std::istringstream& ss, std::size_t vertex_count,
 [[nodiscard]] vec3 face_normal(const vec3& a, const vec3& b, const vec3& c)
 {
   return safe_normalize(glm::cross(b - a, c - a));
+}
+
+[[nodiscard]] std::string resolve_obj_path(std::string_view obj_path,
+                                           std::string_view scene_source_dir)
+{
+  const std::filesystem::path path{obj_path};
+  if (path.is_absolute())
+    return path.string();
+  return (std::filesystem::path(scene_source_dir) / path).lexically_normal().string();
 }
 } // namespace
 
@@ -203,8 +213,9 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
 
 void parse_obj_file(std::istringstream& ss, scene& s)
 {
-  std::string filename;
-  ss >> filename;
+  std::string filename_token;
+  ss >> filename_token;
+  const std::string filename = resolve_obj_path(filename_token, s.source_dir);
 
   vec3 origin{0, 0, 0};
   float ox{}, oy{}, oz{};

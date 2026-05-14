@@ -5,7 +5,7 @@ import hitevent;
 import interval;
 import triangle;
 import ray;
-import vec3;
+import glm;
 
 export namespace cg
 {

@@ -1,6 +1,6 @@
 export module bvh;
 import std;
-import vec3;
+import glm;
 import triangle;
 export namespace cg
 {
