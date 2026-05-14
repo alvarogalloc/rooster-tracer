@@ -1,6 +1,6 @@
 export module point_light;
 import color_rgb;
-import vec3;
+import glm;
 
 export namespace cg
 {

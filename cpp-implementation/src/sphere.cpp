@@ -17,10 +17,13 @@ std::optional<hitevent> get_ray_sphere_hit(const sphere& s, ray r, interval i)
     return std::nullopt;
   }
 
-  float t = (h - std::sqrt(discriminant)) / a;
-  if (t < 0 || !i.contains(t))
+  const float sqrt_discriminant = std::sqrt(discriminant);
+  float t = (h - sqrt_discriminant) / a;
+  if (t < 0.f || !i.contains(t))
   {
-    return std::nullopt;
+    t = (h + sqrt_discriminant) / a;
+    if (t < 0.f || !i.contains(t))
+      return std::nullopt;
   }
   auto normal = glm::normalize((r.at(t) - s.pos) / s.radius);
   if (glm::dot(normal, r.dir) > 0.f)

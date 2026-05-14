@@ -6,19 +6,6 @@ namespace
 {
 using namespace cg;
 
-constexpr float compute_sah_cost(bvh_node l, bvh_node r)
-{
-  // surface area heuristic: cost = left.count * left.area + right.count *
-  // right.area used in subdivide() to pick the best split axis and position
-  const auto surface_area = [](bvh_node n) {
-    const auto extent = n.box_max - n.box_min;
-    return 2 *
-           (extent.x * extent.y + extent.y * extent.z + extent.x * extent.z);
-  };
-  return l.triangle_count * surface_area(l) +
-         r.triangle_count * surface_area(r);
-}
-
 void subdivide(cg::bvh& b, std::span<const cg::triangle> tris,
                std::span<const glm::vec3> centroids, std::uint32_t node_index)
 {
@@ -33,10 +20,9 @@ void subdivide(cg::bvh& b, std::span<const cg::triangle> tris,
   const int axis = extent.x > extent.y ? (extent.x > extent.z ? 0 : 2)
                                        : (extent.y > extent.z ? 1 : 2);
 
-  const float split = (axis == 0   ? node.box_min.x + extent.x
-                       : axis == 1 ? node.box_min.y + extent.y
-                                   : node.box_min.z + extent.z) *
-                      0.5f;
+  const float split = axis == 0   ? node.box_min.x + extent.x * 0.5f
+                      : axis == 1 ? node.box_min.y + extent.y * 0.5f
+                                  : node.box_min.z + extent.z * 0.5f;
 
   const std::uint32_t first = node.left_child_or_first_index;
   const std::uint32_t count = node.triangle_count;
@@ -80,6 +66,11 @@ namespace cg
 {
 void build_bvh(bvh& b, std::span<const triangle> mesh_tris)
 {
+  b.nodes.clear();
+  b.tri_indices.clear();
+  if (mesh_tris.empty())
+    return;
+
   std::vector<vec3> centroids(mesh_tris.size());
   std::ranges::transform(mesh_tris, centroids.begin(), [](const triangle& t) {
     return (t.p0 + t.p1 + t.p2) / 3.f;
@@ -91,6 +82,6 @@ void build_bvh(bvh& b, std::span<const triangle> mesh_tris)
   const auto [mesh_min, mesh_max] = compute_span_aabb(mesh_tris, b.tri_indices);
   b.nodes.emplace_back(mesh_min, 0, mesh_max,
                        static_cast<std::uint32_t>(mesh_tris.size()));
-  subdivide(b, mesh_tris,centroids, 0);
+  subdivide(b, mesh_tris, centroids, 0);
 }
 } // namespace cg

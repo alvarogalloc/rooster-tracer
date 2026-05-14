@@ -81,6 +81,8 @@ void parse_sphere(std::istringstream& ss, scene& s)
   const color_rgb col = parse_color(ss);
   const auto material_id = add_inline_material(s, col);
   s.objects.push_back(sphere{radius, center, material_id});
+  std::println("parsed sphere center=({}, {}, {}) radius={} material={}", center.x,
+               center.y, center.z, radius, material_id);
 }
 void parse_triangle(std::istringstream& ss, scene& s)
 {
@@ -98,6 +100,9 @@ void parse_triangle(std::istringstream& ss, scene& s)
       .p2 = v2,
       .material_id = material_id,
   });
+  std::println("parsed triangle p0=({}, {}, {}) p1=({}, {}, {}) p2=({}, {}, {}) "
+               "material={}",
+               v0.x, v0.y, v0.z, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, material_id);
 }
 void parse_plane(std::istringstream& ss, scene& s)
 {
@@ -105,11 +110,23 @@ void parse_plane(std::istringstream& ss, scene& s)
   const vec3 p = parse_vec3(ss);
   const vec3 n = parse_vec3(ss);
 
-  std::size_t material_id;
-  ss >> material_id;
+  std::size_t material_id{};
+  if (!(ss >> material_id))
+  {
+    std::println(std::cerr, "bad plane (missing material id)");
+    return;
+  }
+  if (material_id >= s.materials.size())
+  {
+    std::println(std::cerr, "bad plane (material id {} out of range [0, {}))",
+                 material_id, s.materials.size());
+    return;
+  }
 
   s.objects.push_back(
       plane{.normal = n, .point = p, .material_id = material_id});
+  std::println("parsed plane point=({}, {}, {}) normal=({}, {}, {}) material={}",
+               p.x, p.y, p.z, n.x, n.y, n.z, material_id);
 }
 
 } // namespace parsers

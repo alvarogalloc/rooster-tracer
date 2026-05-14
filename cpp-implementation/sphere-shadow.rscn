@@ -1,0 +1,16 @@
+ROOSTERSCENEV1
+
+# 05 - Dense mesh + near object composition
+viewport 1920 1080
+fov 50
+camera 0 1.4 6.7   0 0 -3.5   0 1 0   0.001 120
+background 10 16 28
+max_depth 5
+
+mat 247 200 65
+dir_light -1 -1 -0.2 255 250 235 0.5
+point_light 2.25 3 2.7 255 255 255 5
+
+obj sphere-shadow.obj 0 0 0 0
+sphere 0.8 -0.55 -2.7 0.45 115 180 255
+plane 0 -1.0 0  0 1 0  0

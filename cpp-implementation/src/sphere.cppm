@@ -1,5 +1,5 @@
 export module sphere;
-import vec3;
+import glm;
 import color_rgb;
 import std;
 import hitevent;

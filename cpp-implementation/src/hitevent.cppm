@@ -1,5 +1,5 @@
 export module hitevent;
-import vec3;
+import glm;
 import std;
 export namespace cg
 {

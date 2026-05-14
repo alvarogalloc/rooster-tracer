@@ -1,5 +1,5 @@
 export module triangle;
-import vec3;
+import glm;
 import std;
 import ray;
 import hitevent;

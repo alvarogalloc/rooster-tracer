@@ -1,5 +1,5 @@
 export module common_parsers;
-import vec3;
+import glm;
 import std;
 import scene;
 import material;
@@ -11,7 +11,7 @@ namespace parse_utils
 void trim_line(std::string& s);
 inline bool should_skip_line(std::string_view line)
 {
-  return line.starts_with('#') or line.starts_with(' ') or line.size() == 0;
+  return line.starts_with('#') or line.empty();
 }
 
 } // namespace parse_utils

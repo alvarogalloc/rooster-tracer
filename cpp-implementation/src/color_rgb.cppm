@@ -1,5 +1,5 @@
 export module color_rgb;
-import vec3;
+import glm;
 import std;
 
 export using u32 = std::uint32_t;

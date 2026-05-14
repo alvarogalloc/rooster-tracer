@@ -2669,6 +2669,11 @@ using glm::zero;
 #endif
 } // namespace glm
 
+export namespace cg
+{
+using vec3 = glm::vec3;
+}
+
 #if defined(_MSC_VER) // Workaround
 // Partial template specialization doesn't need to be exported explicitly, but
 // this may not work otherwise on MSVC.
