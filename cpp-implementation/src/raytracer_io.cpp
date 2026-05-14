@@ -27,12 +27,11 @@ void save_png(std::string_view path, int width, int height,
   }
 }
 
-void render_to_png(const render_context& context_data, std::string_view path)
+void render_to_png(const scene& scene_data, std::string_view path)
 {
-  std::vector<color_rgb> image(static_cast<std::size_t>(context_data.camera_data.width) *
-                               context_data.camera_data.height);
-  render_scene(context_data, image);
-  save_png(path, context_data.camera_data.width, context_data.camera_data.height,
-           image);
+  std::vector<color_rgb> image(static_cast<std::size_t>(scene_data.camera_data.width) *
+                               scene_data.camera_data.height);
+  render_scene(scene_data, image);
+  save_png(path, scene_data.camera_data.width, scene_data.camera_data.height, image);
 }
 } // namespace cg

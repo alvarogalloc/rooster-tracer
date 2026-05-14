@@ -20,5 +20,4 @@ plane 0 0 -10   0 0 1    0
 
 # colored spheres
 sphere -3 -3 -6 2 255 60 60
-sphere  0 -3 -3 2 80 255 110
 sphere  3 -3 -6 2 80 130 255

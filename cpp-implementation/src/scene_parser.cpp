@@ -71,8 +71,8 @@ void parse_viewport(std::istringstream& ss, scene& s)
     std::println(std::cerr, "bad viewport (expected: viewport width height)");
     return;
   }
-  s.settings.image_width = width;
-  s.settings.image_height = height;
+  s.camera_data.width = width;
+  s.camera_data.height = height;
   std::println("parsed viewport width={} height={}", width, height);
 }
 
@@ -81,21 +81,21 @@ void parse_camera(std::istringstream& ss, scene& s)
   const vec3 pos = parse_vec3(ss);
   const vec3 look_at = parse_vec3(ss);
   const vec3 up = parse_vec3(ss);
-  float near_plane = s.settings.near_plane;
-  float far_plane = s.settings.far_plane;
+  float near_plane = s.camera_data.near;
+  float far_plane = s.camera_data.far;
   if (!(ss >> near_plane >> far_plane))
   {
     std::println(std::cerr,
                  "bad camera (expected near/far), using defaults {} and {}",
-                 s.settings.near_plane, s.settings.far_plane);
+                 s.camera_data.near, s.camera_data.far);
     ss.clear();
   }
 
-  s.settings.camera_pos = pos;
-  s.settings.camera_look_at = look_at;
-  s.settings.camera_up = up;
-  s.settings.near_plane = near_plane;
-  s.settings.far_plane = far_plane;
+  s.camera_data.pos = pos;
+  s.camera_data.lookAt = look_at;
+  s.camera_data.up = up;
+  s.camera_data.near = near_plane;
+  s.camera_data.far = far_plane;
 
   std::println("parsed camera pos=({}, {}, {}) look_at=({}, {}, {}) "
                "up=({}, {}, {}) near={} far={}",
@@ -111,14 +111,14 @@ void parse_fov(std::istringstream& ss, scene& s)
     std::println(std::cerr, "bad fov (expected degrees)");
     return;
   }
-  s.settings.fov_radians = glm::radians(degrees);
-  std::println("parsed fov degrees={} radians={}", degrees, s.settings.fov_radians);
+  s.camera_data.fov = glm::radians(degrees);
+  std::println("parsed fov degrees={} radians={}", degrees, s.camera_data.fov);
 }
 
 void parse_background(std::istringstream& ss, scene& s)
 {
   const color_rgb bg = parse_color(ss);
-  s.settings.background = bg;
+  s.background_color = bg;
   std::println("parsed background rgb=({}, {}, {})", bg.x, bg.y, bg.z);
 }
 
@@ -130,8 +130,8 @@ void parse_max_depth(std::istringstream& ss, scene& s)
     std::println(std::cerr, "bad max_depth (expected positive integer)");
     return;
   }
-  s.settings.max_depth = static_cast<u32>(std::max(1, depth));
-  std::println("parsed max_depth={}", s.settings.max_depth);
+  s.max_depth = static_cast<u32>(std::max(1, depth));
+  std::println("parsed max_depth={}", s.max_depth);
 }
 } // namespace parsers
 static const std::unordered_map<std::string,

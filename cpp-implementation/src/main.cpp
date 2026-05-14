@@ -20,8 +20,7 @@ int main(int argc, char** argv)
       throw std::runtime_error{
           std::format("scene validation failed: {}", *validation_error)};
     }
-    const auto context_data = cg::make_render_context(parsed_scene);
-    cg::render_to_png(context_data, img_path);
+    cg::render_to_png(parsed_scene, img_path);
   }
   catch (const std::exception& ex)
   {

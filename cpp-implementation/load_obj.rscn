@@ -9,14 +9,16 @@ max_depth 5
 
 # one explicit material for OBJ meshes (material_id = 0)
 mat 247 200 65
+mat 255 255 255
 
-dir_light -0.8 -1 -0.4 255 255 255 0.7
-point_light 1.8 2.1 1.8 255 220 180 4.2
+# dir_light -0.8 -1 -0.4 255 255 255 0.7
+point_light 1.5 2.1 1.8 255 220 180 4.2
 
 # grounding plane uses material_id 0
 plane 0 -1.2 0  0 1 0  0
 
 # local OBJ models
-obj sample.obj 0 0.1 -4.0 0
-obj triforce.obj 2.1 -0.2 -6.4 0
-sphere -1.6 -0.5 -3.3 0.5 90 170 255
+# obj sample.obj 0 0.1 -4.0 0
+obj bunny-hi-poly.obj 0 0 0 1
+# obj triforce.obj 2.1 -0.2 -6.4 0
+# sphere -1.6 -0.5 -3.3 0.5 90 170 255
