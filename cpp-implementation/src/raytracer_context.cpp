@@ -4,39 +4,18 @@ import glm;
 
 namespace cg
 {
-render_context make_render_context(const scene& scene_data)
-{
-  const auto& settings = scene_data.settings;
-  return render_context{
-      .scene_data = scene_data,
-      .camera_data =
-          camera{
-              .width = settings.image_width,
-              .height = settings.image_height,
-              .fov = settings.fov_radians,
-              .pos = settings.camera_pos,
-              .up = settings.camera_up,
-              .lookAt = settings.camera_look_at,
-              .far = settings.far_plane,
-              .near = settings.near_plane,
-          },
-      .background_color = settings.background,
-      .max_depth = settings.max_depth,
-  };
-}
-
 std::optional<std::string> validate_scene_for_render(const scene& scene_data)
 {
-  const auto& settings = scene_data.settings;
-  if (settings.image_width <= 0 || settings.image_height <= 0)
+  const auto& camera_data = scene_data.camera_data;
+  if (camera_data.width <= 0 || camera_data.height <= 0)
     return "viewport width and height must be > 0";
-  if (settings.fov_radians <= 0.f || settings.fov_radians >= glm::pi<float>())
+  if (camera_data.fov <= 0.f || camera_data.fov >= glm::pi<float>())
     return "fov must be in (0, PI) radians";
-  if (settings.near_plane <= 0.f)
+  if (camera_data.near <= 0.f)
     return "near plane must be > 0";
-  if (settings.far_plane <= settings.near_plane)
+  if (camera_data.far <= camera_data.near)
     return "far plane must be greater than near plane";
-  if (settings.max_depth == 0)
+  if (scene_data.max_depth == 0)
     return "max_depth must be >= 1";
   if (scene_data.objects.empty())
     return "scene must contain at least one object";

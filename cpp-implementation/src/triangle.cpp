@@ -18,7 +18,7 @@ constexpr float kEpsLen2 = 1e-12f;
 } // namespace
 
 std::optional<hitevent> get_ray_triangle_hit(const triangle& tt, ray r,
-                                             interval i)
+                                             interval i, bool cull_backfaces)
 {
   const vec3& p0 = tt.p0;
   const vec3& p1 = tt.p1;
@@ -32,6 +32,9 @@ std::optional<hitevent> get_ray_triangle_hit(const triangle& tt, ray r,
   const auto d0 = glm::determinant(mat3{col0, col1, col2});
   const interval close_to_zero{-1e-4, 1e-4};
   if (close_to_zero.contains(d0)) // paralelo al triangulo
+    return std::nullopt;
+
+  if (d0 < 0.f && cull_backfaces)
     return std::nullopt;
 
   const auto dt = glm::determinant(mat3{col3, col1, col2});

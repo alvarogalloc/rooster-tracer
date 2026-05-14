@@ -1,6 +1,4 @@
 export module camera;
-import color_rgb;
-import scene;
 import glm;
 import std;
 import ray;
@@ -8,14 +6,14 @@ export namespace cg
 {
 struct camera
 {
-  int width;
-  int height;
-  float fov;
-  vec3 pos;
-  vec3 up;
-  vec3 lookAt;
-  float far;
-  float near;
+  int width{1280};
+  int height{720};
+  float fov{1.0472f};
+  vec3 pos{0.f, 2.f, 5.f};
+  vec3 up{0.f, 1.f, 0.f};
+  vec3 lookAt{0.f, -1.f, -4.f};
+  float far{20.f};
+  float near{0.001f};
   vec3 screen_to_ndc(int x, int y) const;
   ray compute_ray(int x, int y, vec3 forward, vec3 right, vec3 upVec) const;
   void cast_all_rays(std::function<void(ray, int, int)> ray_callback) const;

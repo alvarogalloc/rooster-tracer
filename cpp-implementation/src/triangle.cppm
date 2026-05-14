@@ -20,5 +20,5 @@ struct triangle
   std::size_t material_id{0};
 };
 
-std::optional<hitevent> get_ray_triangle_hit(const triangle&, ray, interval);
+std::optional<hitevent> get_ray_triangle_hit(const triangle&, ray, interval, bool cull_backfaces=true);
 } // namespace cg
