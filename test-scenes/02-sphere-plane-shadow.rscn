@@ -1,0 +1,11 @@
+ROOSTERSCENEV1
+viewport 640 360
+background 14 16 28
+fov 55
+camera 0 1.1 5.2 0 -0.2 -3.5 0 1 0 0.01 50
+max_depth 3
+dir_light -1 -1 -0.4 255 255 255 0.9
+point_light 2.4 2.8 1.5 255 214 190 28
+mat 175 175 175
+plane 0 -1.1 0 0 1 0 0
+sphere 0 0 -3.8 1 80 180 235

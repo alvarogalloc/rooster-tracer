@@ -1,6 +1,7 @@
 package scene.parsers;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ public class ObjParser {
       return;
     }
 
-    String filename = tokens[1];
+    String filename = resolveObjPath(scene, tokens[1]);
     Vector3D origin = new Vector3D(0, 0, 0);
     if (tokens.length >= 5) {
       try {
@@ -100,6 +101,14 @@ public class ObjParser {
       throw new IOException("obj parser: material out of bounds");
     }
     return 0;
+  }
+
+  private static String resolveObjPath(Scene scene, String objPath) {
+    File path = new File(objPath);
+    if (path.isAbsolute()) {
+      return path.getPath();
+    }
+    return new File(scene.getSourceDir(), objPath).getPath();
   }
 
   private static void parseVertex(String[] tokens, List<Vector3D> vertices, Vector3D origin) {

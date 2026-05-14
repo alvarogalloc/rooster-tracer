@@ -2,6 +2,7 @@ package scene;
 
 import java.awt.Color;
 import math.Intersection;
+import math.Ray;
 import math.Vector3D;
 
 public class DirectionalLight implements Light {
@@ -34,5 +35,12 @@ public class DirectionalLight implements Light {
     final float specular = (float) Math.pow(specBase, Math.max(1f, material.getShininess()));
     final Vector3D radiance = color.mul(intensity);
     return radiance.vec_mul(material.getDiffuse().mul(lambert).add(material.getSpecular().mul(specular)));
+  }
+
+  @Override
+  public ShadowRay shadowRay(Intersection hit) {
+    Vector3D origin = hit.getPoint().add(hit.getNormal().normalize().mul(1e-3f));
+    Vector3D toLight = dir.mul(-1f);
+    return new ShadowRay(new Ray(origin, toLight), Float.POSITIVE_INFINITY);
   }
 }

@@ -1,6 +1,7 @@
 package scene;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
@@ -14,6 +15,11 @@ public class SceneParser {
 
   public static Scene parseScene(String filePath) throws IOException {
     Scene scene = new Scene();
+    File sceneFile = new File(filePath).getAbsoluteFile();
+    File parentDir = sceneFile.getParentFile();
+    if (parentDir != null) {
+      scene.setSourceDir(parentDir.getPath());
+    }
 
     try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
       String header = reader.readLine();

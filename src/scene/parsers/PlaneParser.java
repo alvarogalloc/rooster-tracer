@@ -19,6 +19,11 @@ public class PlaneParser {
       float ny = Float.parseFloat(tokens[5]);
       float nz = Float.parseFloat(tokens[6]);
       int materialId = Integer.parseInt(tokens[7]);
+      if (materialId < 0 || materialId >= scene.getMaterials().size()) {
+        System.err.println(
+            "Invalid plane format. Expected material_id in range [0, " + scene.getMaterials().size() + ")");
+        return;
+      }
       scene.add(new Plane(new Vector3D(px, py, pz), new Vector3D(nx, ny, nz), materialId));
     } catch (NumberFormatException e) {
       System.err.println("Error parsing plane: " + e.getMessage());

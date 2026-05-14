@@ -2,6 +2,7 @@ package scene;
 
 import java.awt.Color;
 import math.Intersection;
+import math.Ray;
 import math.Vector3D;
 
 public class PointLight implements Light {
@@ -37,5 +38,13 @@ public class PointLight implements Light {
     final float specular = (float) Math.pow(specBase, Math.max(1f, material.getShininess()));
     final Vector3D radiance = color.mul(intensity / distSq);
     return radiance.vec_mul(material.getDiffuse().mul(lambert).add(material.getSpecular().mul(specular)));
+  }
+
+  @Override
+  public ShadowRay shadowRay(Intersection hit) {
+    Vector3D toLight = pos.sub(hit.getPoint());
+    float distance = (float) Math.sqrt(toLight.lengthSquared());
+    Vector3D origin = hit.getPoint().add(hit.getNormal().normalize().mul(1e-3f));
+    return new ShadowRay(new Ray(origin, toLight), distance);
   }
 }
