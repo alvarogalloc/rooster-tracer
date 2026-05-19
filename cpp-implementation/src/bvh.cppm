@@ -30,6 +30,7 @@ struct bvh
 // specifically 32 bits to fit two in single cache line
 static_assert(sizeof(bvh_node) == 32, "bvh_node must be 32 bytes");
 
-void build_bvh(bvh& mesh_bvh_info, std::span<const triangle> mesh_tris);
+void build_bvh(bvh& mesh_bvh_info, std::span<const triangle> mesh_tris,
+               std::span<const vertex> vertices);
 
 } // namespace cg

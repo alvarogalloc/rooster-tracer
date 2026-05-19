@@ -17,12 +17,23 @@ constexpr float kEpsLen2 = 1e-12f;
 }
 } // namespace
 
-std::optional<hitevent> get_ray_triangle_hit(const triangle& tt, ray r,
+std::optional<hitevent> get_ray_triangle_hit(const triangle& tt,
+                                             std::span<const vertex> vertices,
+                                             ray r,
                                              interval i, bool cull_backfaces)
 {
-  const vec3& p0 = tt.p0;
-  const vec3& p1 = tt.p1;
-  const vec3& p2 = tt.p2;
+  const vertex& v0 = vertices[tt.vertex_start];
+  const vertex& v1 = vertices[tt.vertex_start+1];
+  const vertex& v2 = vertices[tt.vertex_start+2];
+  const vec3& p0 = v0.p;
+  const vec3& p1 = v1.p;
+  const vec3& p2 = v2.p;
+  const vec3& n0 = v0.n;
+  const vec3& n1 = v1.n;
+  const vec3& n2 = v2.n;
+  const bool has_vertex_normals = v0.has_normal && v1.has_normal && v2.has_normal;
+  // const vec3& p2 = tt.v3.p;
+
   using glm::mat3;
   const auto col0 = -r.dir;
   const auto col1 = p1 - p0;
@@ -61,9 +72,9 @@ std::optional<hitevent> get_ray_triangle_hit(const triangle& tt, ray r,
   const float bary_w = 1.f - bary_u - bary_v;
   const vec3 face_normal = safe_normalize(glm::cross(col1, col2));
   vec3 normal = face_normal;
-  if (tt.has_vertex_normals)
+  if (has_vertex_normals)
   {
-    normal = safe_normalize(tt.n0 * bary_w + tt.n1 * bary_u + tt.n2 * bary_v);
+    normal = safe_normalize(n0 * bary_w + n1 * bary_u + n2 * bary_v);
     if (glm::dot(normal, normal) <= kEpsLen2)
       normal = face_normal;
   }

@@ -18,6 +18,7 @@ struct scene
   std::vector<primitive_t> objects{};
   light_collection lights{};
   material_collection materials{};
+  std::vector<vertex> vertices{};
   std::vector<triangle> mesh_triangles{};
   std::string source_dir{};
   camera camera_data{};

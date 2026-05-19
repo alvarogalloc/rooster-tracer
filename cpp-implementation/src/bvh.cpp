@@ -7,6 +7,7 @@ namespace
 using namespace cg;
 
 void subdivide(cg::bvh& b, std::span<const cg::triangle> tris,
+               std::span<const cg::vertex> vertices,
                std::span<const glm::vec3> centroids, std::uint32_t node_index)
 {
   constexpr static auto bucket_size{2};
@@ -44,9 +45,9 @@ void subdivide(cg::bvh& b, std::span<const cg::triangle> tris,
   const std::uint32_t left_index = static_cast<std::uint32_t>(b.nodes.size());
 
   const auto [left_min, left_max] = compute_span_aabb(
-      tris, std::span{b.tri_indices}.subspan(first, left_count));
+      tris, vertices, std::span{b.tri_indices}.subspan(first, left_count));
   const auto [right_min, right_max] = compute_span_aabb(
-      tris,
+      tris, vertices,
       std::span{b.tri_indices}.subspan(first + left_count, count - left_count));
 
   b.nodes.emplace_back(left_min, first, left_max, left_count);
@@ -57,14 +58,15 @@ void subdivide(cg::bvh& b, std::span<const cg::triangle> tris,
   node.left_child_or_first_index = left_index;
   node.triangle_count = 0;
 
-  subdivide(b, tris, centroids, left_index);
-  subdivide(b, tris, centroids, left_index + 1);
+  subdivide(b, tris, vertices, centroids, left_index);
+  subdivide(b, tris, vertices, centroids, left_index + 1);
 }
 
 } // namespace
 namespace cg
 {
-void build_bvh(bvh& b, std::span<const triangle> mesh_tris)
+void build_bvh(bvh& b, std::span<const triangle> mesh_tris,
+               std::span<const vertex> vertices)
 {
   b.nodes.clear();
   b.tri_indices.clear();
@@ -72,16 +74,19 @@ void build_bvh(bvh& b, std::span<const triangle> mesh_tris)
     return;
 
   std::vector<vec3> centroids(mesh_tris.size());
-  std::ranges::transform(mesh_tris, centroids.begin(), [](const triangle& t) {
-    return (t.p0 + t.p1 + t.p2) / 3.f;
+  std::ranges::transform(mesh_tris, centroids.begin(), [&](const triangle& t) {
+    return (vertices[t.vertex_start].p + vertices[t.vertex_start+1].p +
+            vertices[t.vertex_start+2].p) /
+           3.f;
   });
   b.nodes.reserve(2 * mesh_tris.size() - 1);
   b.tri_indices.resize(mesh_tris.size());
   std::ranges::iota(b.tri_indices, 0);
 
-  const auto [mesh_min, mesh_max] = compute_span_aabb(mesh_tris, b.tri_indices);
+  const auto [mesh_min, mesh_max] =
+      compute_span_aabb(mesh_tris, vertices, b.tri_indices);
   b.nodes.emplace_back(mesh_min, 0, mesh_max,
                        static_cast<std::uint32_t>(mesh_tris.size()));
-  subdivide(b, mesh_tris, centroids, 0);
+  subdivide(b, mesh_tris, vertices, centroids, 0);
 }
 } // namespace cg

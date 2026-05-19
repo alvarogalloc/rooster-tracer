@@ -29,14 +29,16 @@ bool is_occluded(const cg::scene& scene_data, cg::ray ray_data,
         object
             .visit(overload{
                 [&](const cg::triangle& tri) {
-                  return get_ray_triangle_hit(tri, ray_data, hit_range);
+                  return get_ray_triangle_hit(tri, scene_data.vertices, ray_data,
+                                              hit_range);
                 },
                 [&](const cg::sphere& sph) {
                   return get_ray_sphere_hit(sph, ray_data, hit_range);
                 },
                 [&](const cg::mesh3d& mesh) {
                   return get_ray_mesh_hit(mesh, scene_data.mesh_triangles,
-                                          ray_data, hit_range);
+                                          scene_data.vertices, ray_data,
+                                          hit_range);
                 },
                 [&](const cg::plane& p) {
                   return get_ray_plane_hit(p, ray_data, hit_range);
@@ -61,14 +63,15 @@ std::optional<hitevent> find_closest_hit(const scene& scene_data, ray ray_data)
   {
     std::optional<hitevent> hit = object.visit(overload{
         [&](const triangle& tri) {
-          return get_ray_triangle_hit(tri, ray_data, hit_range);
+          return get_ray_triangle_hit(tri, scene_data.vertices, ray_data,
+                                      hit_range);
         },
         [&](const sphere& sph) {
           return get_ray_sphere_hit(sph, ray_data, hit_range);
         },
         [&](const mesh3d& mesh) {
-          return get_ray_mesh_hit(mesh, scene_data.mesh_triangles, ray_data,
-                                  hit_range);
+          return get_ray_mesh_hit(mesh, scene_data.mesh_triangles,
+                                  scene_data.vertices, ray_data, hit_range);
         },
         [&](const plane& p) {
           return get_ray_plane_hit(p, ray_data, hit_range);
