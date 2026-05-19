@@ -44,10 +44,9 @@ using face_polygon = std::vector<face_vertex_ref>;
                                                std::size_t normal_count)
 {
   const auto first_slash = token.find('/');
-  const auto second_slash =
-      first_slash == std::string_view::npos
-          ? std::string_view::npos
-          : token.find('/', first_slash + 1);
+  const auto second_slash = first_slash == std::string_view::npos
+                                ? std::string_view::npos
+                                : token.find('/', first_slash + 1);
 
   const auto vertex_part = token.substr(0, first_slash);
   if (vertex_part.empty())
@@ -101,7 +100,9 @@ void parse_face(std::istringstream& ss, std::size_t vertex_count,
   const std::filesystem::path path{obj_path};
   if (path.is_absolute())
     return path.string();
-  return (std::filesystem::path(scene_source_dir) / path).lexically_normal().string();
+  return (std::filesystem::path(scene_source_dir) / path)
+      .lexically_normal()
+      .string();
 }
 } // namespace
 
@@ -119,7 +120,7 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
     throw std::runtime_error{"obj parser: material out of bounds"};
   }
 
-  std::vector<vec3> vertices;
+  std::vector<vec3> obj_positions;
   std::vector<vec3> obj_normals;
   std::vector<face_polygon> faces;
   std::string line;
@@ -134,7 +135,7 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
     ss >> type;
     if (type == "v")
     {
-      vertices.push_back(parse_vec3(ss) - origin);
+      obj_positions.push_back(parse_vec3(ss) - origin);
       continue;
     }
     if (type == "vn")
@@ -144,18 +145,19 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
     }
     if (type == "f")
     {
-      parse_face(ss, vertices.size(), obj_normals.size(), faces);
+      parse_face(ss, obj_positions.size(), obj_normals.size(), faces);
     }
   }
 
-  std::vector<vec3> generated_normals(vertices.size(), vec3{0.f, 0.f, 0.f});
+  std::vector<vec3> generated_normals(obj_positions.size(),
+                                      vec3{0.f, 0.f, 0.f});
   for (const auto& face : faces)
   {
     for (std::size_t i = 1; i + 1 < face.size(); ++i)
     {
-      const vec3& a = vertices.at(face[0].vertex_idx);
-      const vec3& b = vertices.at(face[i].vertex_idx);
-      const vec3& c = vertices.at(face[i + 1].vertex_idx);
+      const vec3& a = obj_positions.at(face[0].vertex_idx);
+      const vec3& b = obj_positions.at(face[i].vertex_idx);
+      const vec3& c = obj_positions.at(face[i + 1].vertex_idx);
       const vec3 fn = face_normal(a, b, c);
       generated_normals[face[0].vertex_idx] += fn;
       generated_normals[face[i].vertex_idx] += fn;
@@ -174,9 +176,9 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
       const auto& f1 = face[i];
       const auto& f2 = face[i + 1];
 
-      const vec3& p0 = vertices.at(f0.vertex_idx);
-      const vec3& p1 = vertices.at(f1.vertex_idx);
-      const vec3& p2 = vertices.at(f2.vertex_idx);
+      const vec3& p0 = obj_positions.at(f0.vertex_idx);
+      const vec3& p1 = obj_positions.at(f1.vertex_idx);
+      const vec3& p2 = obj_positions.at(f2.vertex_idx);
 
       const vec3 fallback = face_normal(p0, p1, p2);
       auto pick_normal = [&](const face_vertex_ref& ref) {
@@ -188,14 +190,25 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
         return fallback;
       };
 
+      const auto base_vertex = s.vertices.size();
+      s.vertices.push_back(vertex{
+          .p = p0,
+          .n = pick_normal(f0),
+          .has_normal = true,
+      });
+      s.vertices.push_back(vertex{
+          .p = p1,
+          .n = pick_normal(f1),
+          .has_normal = true,
+      });
+      s.vertices.push_back(vertex{
+          .p = p2,
+          .n = pick_normal(f2),
+          .has_normal = true,
+      });
+
       s.mesh_triangles.push_back(triangle{
-          .p0 = p0,
-          .p1 = p1,
-          .p2 = p2,
-          .n0 = pick_normal(f0),
-          .n1 = pick_normal(f1),
-          .n2 = pick_normal(f2),
-          .has_vertex_normals = true,
+          .vertex_start = base_vertex,
           .material_id = material_id,
       });
     }
@@ -203,12 +216,14 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
 
   const auto tri_count = s.mesh_triangles.size() - first_tri;
   std::println("done loading model (vertex count: {}, face count: {})",
-               vertices.size(), tri_count);
+               obj_positions.size(), tri_count);
 
   mesh3d& new_mesh = std::get<mesh3d>(
       s.objects.emplace_back(mesh3d{first_tri, tri_count, material_id}));
-  build_bvh(new_mesh.blas, std::span{s.mesh_triangles}.subspan(
-                               new_mesh.vertex_start, new_mesh.vertex_count));
+  build_bvh(new_mesh.blas,
+            std::span{s.mesh_triangles}.subspan(new_mesh.triangle_start,
+                                                new_mesh.triangle_count),
+            s.vertices);
 }
 
 void parse_obj_file(std::istringstream& ss, scene& s)

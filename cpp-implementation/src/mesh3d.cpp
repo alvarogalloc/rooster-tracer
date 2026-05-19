@@ -4,7 +4,8 @@ namespace cg
 {
 
 std::optional<cg::hitevent> get_ray_mesh_hit(const mesh3d& mesh,
-                                             std::span<const triangle> tris,
+                                             std::span<const triangle> triangles,
+                                             std::span<const vertex> vertices,
                                              ray r, interval valid)
 {
   if (mesh.blas.nodes.empty())
@@ -24,7 +25,8 @@ std::optional<cg::hitevent> get_ray_mesh_hit(const mesh3d& mesh,
       const std::uint32_t tri_index =
           mesh.blas.tri_indices[node.left_child_or_first_index + i];
 
-      if (auto hit = get_ray_triangle_hit(tris[tri_index], r, valid))
+      const triangle& tri = triangles[mesh.triangle_start + tri_index];
+      if (auto hit = get_ray_triangle_hit(tri, vertices, r, valid))
       {
         valid.max = hit->t; // narrow the interval — discard farther hits
         result = hit;

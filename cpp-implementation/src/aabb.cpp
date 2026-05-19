@@ -8,7 +8,8 @@ import glm;
 namespace cg
 {
 
-aabb compute_span_aabb(std::span<const triangle> vertices,
+aabb compute_span_aabb(std::span<const triangle> triangles,
+                       std::span<const vertex> vertices,
                        std::span<const std::uint32_t> indices)
 {
   auto inf = std::numeric_limits<float>::infinity();
@@ -16,8 +17,10 @@ aabb compute_span_aabb(std::span<const triangle> vertices,
 
   for (const auto i : indices)
   {
-    const triangle& tri = vertices.at(i);
-    for (const auto v : {tri.p0, tri.p1, tri.p2})
+    const triangle& tri = triangles.at(i);
+    for (const auto& v : {vertices[tri.vertex_start].p,
+                          vertices[tri.vertex_start+1].p,
+                          vertices[tri.vertex_start+2].p})
     {
 
       box.min.x = std::min(box.min.x, v.x);

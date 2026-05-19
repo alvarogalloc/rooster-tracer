@@ -12,14 +12,15 @@ export namespace cg
 
 struct mesh3d
 {
-  std::size_t vertex_start;
-  std::size_t vertex_count;
+  std::size_t triangle_start;
+  std::size_t triangle_count;
   std::size_t material_id;
 
   bvh blas;
 };
 
 std::optional<cg::hitevent> get_ray_mesh_hit(const mesh3d& mesh,
-                                             std::span<const triangle> tris,
+                                             std::span<const triangle> triangles,
+                                             std::span<const vertex> vertices,
                                              ray r, interval valid);
 } // namespace cg

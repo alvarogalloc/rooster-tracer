@@ -20,8 +20,6 @@ void trim_line(std::string& s)
 }
 } // namespace parse_utils
 
-namespace parsers
-{
 namespace
 {
 constexpr float kMaterialEqEps = 1e-8f;
@@ -39,13 +37,14 @@ constexpr float kMaterialEqEps = 1e-8f;
          std::abs(a.shininess - b.shininess) <= kMaterialEqEps;
 }
 } // namespace
+namespace parsers
+{
 
 std::size_t add_inline_material(scene& s, const color_rgb& albedo)
 {
   const material m = make_phong_material(albedo);
-  const auto it = std::ranges::find_if(s.materials, [&](const material& c) {
-    return same_material(c, m);
-  });
+  const auto it = std::ranges::find_if(
+      s.materials, [&](const material& c) { return same_material(c, m); });
   if (it != s.materials.cend())
   {
     return std::distance(std::begin(s.materials), it);
@@ -91,13 +90,15 @@ void parse_triangle(std::istringstream& ss, scene& s)
   const vec3 v1 = parse_vec3(ss);
   const vec3 v2 = parse_vec3(ss);
 
+  const auto start_i = s.vertices.size();
+  s.vertices.push_back(vertex{.p = v0});
+  s.vertices.push_back(vertex{.p = v1});
+  s.vertices.push_back(vertex{.p = v2});
   const color_rgb col = parse_color(ss);
   const auto material_id = add_inline_material(s, col);
 
   s.objects.push_back(triangle{
-      .p0 = v0,
-      .p1 = v1,
-      .p2 = v2,
+      .vertex_start = start_i,
       .material_id = material_id,
   });
   std::println("parsed triangle p0=({}, {}, {}) p1=({}, {}, {}) p2=({}, {}, {}) "
