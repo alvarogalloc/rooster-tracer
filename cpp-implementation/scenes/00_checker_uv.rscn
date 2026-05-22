@@ -1,0 +1,12 @@
+ROOSTERSCENEV1
+viewport 1024 1024
+fov 60
+camera 0 1.6 2.8   0 0 0   0 1 0   0.1 20
+background 12 12 16
+max_depth 1
+
+dir_light -0.6 -1 -0.4 255 255 255 1.0
+point_light 2 3 2 255 230 210 3.0
+
+mat 255 255 255
+obj ../assets/checker_quad.obj 0 0 0 0

@@ -1,0 +1,14 @@
+ROOSTERSCENEV1
+viewport 1280 720
+fov 45
+camera 0 2 5   0 1 0   0 1 0   0.1 50
+background 10 10 10
+max_depth 1
+
+mat 255 200 150
+point_light 1 4 1 255 200 100 8.0
+
+plane 0 0 0   0 1 0   0
+obj ../assets/unitized/toy-story-lamp.obj 0 1 0 0
+sphere 2 1 1 1 200 255 200
+sphere -2 1 1 1 200 200 255

@@ -12,8 +12,8 @@ export namespace cg
 
 struct aabb
 {
-  vec3 min;
-  vec3 max;
+    vec3 min;
+    vec3 max;
 };
 
 static_assert(sizeof(aabb) == 24, "aabb has unexpected padding");

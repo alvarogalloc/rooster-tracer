@@ -11,7 +11,7 @@ namespace parse_utils
 void trim_line(std::string& s);
 inline bool should_skip_line(std::string_view line)
 {
-  return line.starts_with('#') or line.empty();
+    return line.starts_with('#') or line.empty();
 }
 
 } // namespace parse_utils

@@ -10,19 +10,21 @@ import glm;
 import color_rgb;
 import plane;
 import camera;
+import texture;
 export namespace cg
 {
 struct scene
 {
-  using primitive_t = std::variant<sphere, triangle, plane, mesh3d>;
-  std::vector<primitive_t> objects{};
-  light_collection lights{};
-  material_collection materials{};
-  std::vector<vertex> vertices{};
-  std::vector<triangle> mesh_triangles{};
-  std::string source_dir{};
-  camera camera_data{};
-  color_rgb background_color{color_rgb::from_rgb_256(10, 32, 90)};
-  u32 max_depth{5};
+    using primitive_t = std::variant<sphere, triangle, plane, mesh3d>;
+    std::vector<primitive_t> objects{};
+    light_collection lights{};
+    material_collection materials{};
+    std::vector<texture> textures{};
+    std::vector<vertex> vertices{};
+    std::vector<triangle> mesh_triangles{};
+    std::string source_dir{};
+    camera camera_data{};
+    color_rgb background_color{color_rgb::from_rgb_256(10, 32, 90)};
+    u32 max_depth{5};
 };
 } // namespace cg

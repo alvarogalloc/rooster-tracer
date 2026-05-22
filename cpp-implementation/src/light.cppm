@@ -7,7 +7,6 @@ import point_light;
 export namespace cg
 {
 
-
-using light = std::variant< directional_light, point_light>;
+using light = std::variant<directional_light, point_light>;
 using light_collection = std::vector<light>;
 } // namespace cg
