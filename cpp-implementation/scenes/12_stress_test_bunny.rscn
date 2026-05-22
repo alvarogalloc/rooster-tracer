@@ -1,0 +1,13 @@
+ROOSTERSCENEV1
+viewport 1280 720
+fov 40
+camera 0 2 6   0 1 0   0 1 0   0.1 100
+background 5 5 5
+max_depth 1
+
+mat 255 255 255
+dir_light -0.5 -1 -0.5 255 255 255 0.8
+point_light 2 5 2 255 255 255 3.0
+
+plane 0 0 0   0 1 0   0
+obj ../assets/unitized/bunny-hi-poly.obj 0 1 0 0

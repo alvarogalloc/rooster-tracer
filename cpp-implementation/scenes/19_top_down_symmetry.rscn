@@ -1,0 +1,16 @@
+ROOSTERSCENEV1
+viewport 1280 720
+fov 60
+camera 0 10 0.1   0 0 0   0 1 0   0.1 50
+background 50 50 50
+max_depth 1
+
+mat 255 255 255
+point_light 0 8 0 255 255 255 10.0
+
+plane 0 0 0   0 1 0   0
+obj ../assets/unitized/utah_teapot.obj 0 1 0 0
+sphere 4 1 4 1 255 0 0
+sphere -4 1 4 1 0 255 0
+sphere 4 1 -4 1 0 0 255
+sphere -4 1 -4 1 255 255 0

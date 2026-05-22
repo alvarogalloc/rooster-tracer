@@ -47,8 +47,9 @@ obj <path.obj> [ox oy oz] [material_id]
 
 - `obj` path can be absolute or relative to the `.rscn` file directory.
 - `ox oy oz` and `material_id` are optional.
+- `.mtl` files are parsed when referenced by the OBJ; `map_Kd` loads a texture
+  and uses the OBJ UVs for diffuse color.
 
 ## Comments
 
 Lines starting with `#` are ignored.
-

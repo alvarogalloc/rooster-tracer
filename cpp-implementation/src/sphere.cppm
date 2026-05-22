@@ -9,12 +9,12 @@ import ray;
 
 export namespace cg
 {
-struct sphere 
+struct sphere
 {
-  float radius;
-  vec3 pos;
-  std::size_t material_id{0};
+    float radius;
+    vec3 pos;
+    std::size_t material_id{0};
 };
 
-   std::optional<hitevent> get_ray_sphere_hit(const sphere&, ray, interval);
+std::optional<hitevent> get_ray_sphere_hit(const sphere&, ray, interval);
 } // namespace cg

@@ -1,0 +1,17 @@
+ROOSTERSCENEV1
+viewport 1280 720
+fov 55
+camera 0 4 8   0 1 0   0 1 0   0.1 50
+background 40 40 50
+max_depth 1
+
+mat 200 200 200
+dir_light -0.5 -1 -0.2 255 255 255 0.6
+point_light 5 6 5 255 150 150 4.0
+point_light -5 6 5 150 150 255 4.0
+point_light 0 8 -2 255 255 255 3.0
+
+plane 0 0 0   0 1 0   0
+obj ../assets/unitized/beetle.obj -3 1 0 0
+obj ../assets/unitized/utah_teapot.obj 0 1 0 0
+obj ../assets/unitized/bunny-hi-poly.obj 3 1 0 0
