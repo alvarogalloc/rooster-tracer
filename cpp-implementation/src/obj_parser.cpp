@@ -174,12 +174,16 @@ void parse_face(std::istringstream& ss, std::size_t vertex_count,
 struct mtl_material
 {
     std::string name;
-    std::optional<vec3> ambient;
-    std::optional<vec3> diffuse;
-    std::optional<vec3> specular;
-    std::optional<float> shininess;
-    std::optional<std::string> diffuse_map;
-    std::optional<std::string> normal_map;
+    std::optional<vec3> ambient;   // Ka – rarely reliable from Blender exports
+    std::optional<vec3> diffuse;   // Kd
+    std::optional<vec3> specular;  // Ks
+    std::optional<vec3> emissive;  // Ke
+    std::optional<float> shininess; // Ns
+    std::optional<float> dissolve;  // d / Tr
+    std::optional<int>   illum;     // illumination model
+    std::optional<std::string> diffuse_map;  // map_Kd
+    std::optional<std::string> specular_map; // map_Ks
+    std::optional<std::string> normal_map;   // map_Bump / map_bump / bump
 };
 
 [[nodiscard]] std::string resolve_asset_path(std::string_view asset_path,
@@ -206,6 +210,10 @@ struct mtl_material
     return id;
 }
 
+// Convert Blender-style Ns (0..1000) to a Phong exponent that
+// is meaningful inside our renderer. Blender maps Ns linearly
+// where 0 = fully rough and 900+ = nearly mirror. We keep it
+// as-is because our phong_brdf already clamps to max(1, m.shininess).
 [[nodiscard]] material to_material(
     const mtl_material& src,
     const std::optional<std::size_t>& texture_id = std::nullopt,
@@ -213,12 +221,32 @@ struct mtl_material
 {
     const color_rgb diffuse =
         src.diffuse ? color_rgb{*src.diffuse} : color_rgb{1.f, 1.f, 1.f};
-    const color_rgb ambient = src.ambient
-                                  ? color_rgb{*src.ambient}
-                                  : color_rgb{diffuse * kDefaultAmbientFactor};
+
+    // Blender always exports Ka 1 1 1 (a convention, not the real ambient).
+    // Derive ambient from Kd so the material colour is preserved.
+    // If Ka is explicitly set to something other than white, honour it scaled
+    // down by kDefaultAmbientFactor so it can still act as a tint.
+    color_rgb ambient;
+    if (src.ambient)
+    {
+        const vec3 ka = *src.ambient;
+        const bool is_white_ka =
+            ka.x >= 0.99f && ka.y >= 0.99f && ka.z >= 0.99f;
+        ambient = is_white_ka
+                      ? color_rgb{diffuse * kDefaultAmbientFactor}
+                      : color_rgb{ka * kDefaultAmbientFactor};
+    }
+    else
+    {
+        ambient = color_rgb{diffuse * kDefaultAmbientFactor};
+    }
+
     const color_rgb specular =
-        src.specular ? color_rgb{*src.specular} : color_rgb{1.f, 1.f, 1.f};
+        src.specular ? color_rgb{*src.specular} : color_rgb{0.5f, 0.5f, 0.5f};
+
+    // Ns in MTL is 0..1000; pass directly – phong_brdf clamps below 1.
     const float shininess = src.shininess.value_or(kDefaultShininess);
+
     return material{
         .ambient = ambient,
         .specular = specular,
@@ -298,8 +326,13 @@ void parse_mtl_file(const std::string& filename, scene& s,
             current.ambient.reset();
             current.diffuse.reset();
             current.specular.reset();
+            current.emissive.reset();
             current.shininess.reset();
+            current.dissolve.reset();
+            current.illum.reset();
             current.diffuse_map.reset();
+            current.specular_map.reset();
+            current.normal_map.reset();
             continue;
         }
         if (type == "Ka")
@@ -322,6 +355,37 @@ void parse_mtl_file(const std::string& filename, scene& s,
             current.shininess = parse_float_optional(ss);
             continue;
         }
+        if (type == "Ke")
+        {
+            current.emissive = parse_vec3_optional(ss);
+            continue;
+        }
+        if (type == "d")
+        {
+            current.dissolve = parse_float_optional(ss);
+            continue;
+        }
+        if (type == "Tr")
+        {
+            // Tr = 1 - d
+            const auto tr = parse_float_optional(ss);
+            if (tr)
+                current.dissolve = 1.f - *tr;
+            continue;
+        }
+        if (type == "illum")
+        {
+            int illum_model = 2;
+            if (ss >> illum_model)
+                current.illum = illum_model;
+            continue;
+        }
+        if (type == "Ni")
+        {
+            // Index of refraction – parsed but not yet used
+            (void)parse_float_optional(ss);
+            continue;
+        }
         if (type == "map_Kd")
         {
             std::string map_path;
@@ -330,7 +394,16 @@ void parse_mtl_file(const std::string& filename, scene& s,
                 current.diffuse_map = map_path;
             continue;
         }
-        if (type == "map_Bump" || type == "map_bump" || type == "bump")
+        if (type == "map_Ks")
+        {
+            std::string map_path;
+            ss >> map_path;
+            if (!map_path.empty())
+                current.specular_map = map_path;
+            continue;
+        }
+        if (type == "map_Bump" || type == "map_bump" || type == "bump"
+            || type == "map_Kn" || type == "norm")
         {
             std::string map_path;
             ss >> map_path;
