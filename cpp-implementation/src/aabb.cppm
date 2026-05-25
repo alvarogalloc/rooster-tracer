@@ -16,9 +16,5 @@ struct aabb
     vec3 max;
 };
 
-static_assert(sizeof(aabb) == 24, "aabb has unexpected padding");
-aabb compute_span_aabb(std::span<const triangle> triangles,
-                       std::span<const vertex> vertices,
-                       std::span<const std::uint32_t> indices);
 bool is_ray_aabb_hit(const aabb&, ray, interval);
 } // namespace cg

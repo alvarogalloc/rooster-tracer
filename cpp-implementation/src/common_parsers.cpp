@@ -22,7 +22,7 @@ void trim_line(std::string& s)
 
 namespace
 {
-constexpr float kMaterialEqEps = 1e-8f;
+constexpr double kMaterialEqEps = 1e-8f;
 
 [[nodiscard]] bool same_color(color_rgb a, color_rgb b)
 {
@@ -63,14 +63,14 @@ vec3 parse_vec3(std::istringstream& ss)
 
 color_rgb parse_color(std::istringstream& ss)
 {
-    const float imax_channel = 1.f / 255.99f;
+    const double imax_channel = 1. / 255.99;
     return color_rgb(parse_vec3(ss) * imax_channel);
 }
 void parse_sphere(std::istringstream& ss, scene& s)
 {
     const vec3 center = parse_vec3(ss);
 
-    float radius{};
+    double radius{};
     if (!(ss >> radius))
     {
         std::println(std::cerr, "bad sphere (missing radius)");

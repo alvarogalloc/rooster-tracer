@@ -5,35 +5,35 @@ export namespace cg
 
 struct interval
 {
-    float min;
-    float max;
+    double min;
+    double max;
     constexpr interval()
-        : min(+std::numeric_limits<float>::infinity()),
-          max(-std::numeric_limits<float>::infinity())
+        : min(+std::numeric_limits<double>::infinity()),
+          max(-std::numeric_limits<double>::infinity())
     {
     }
 
-    constexpr interval(float min, float max) : min(min), max(max)
+    constexpr interval(double min, double max) : min(min), max(max)
     {
     }
 
-    float size() const
+    double size() const
     {
         return max - min;
     }
 
-    bool contains(float x) const
+    bool contains(double x) const
     {
         return min <= x && x <= max;
     }
 
-    bool surrounds(float x) const
+    bool surrounds(double x) const
     {
         return min < x && x < max;
     }
 };
 
-constexpr inline interval empty{};
-constexpr inline interval universe{-std::numeric_limits<float>::infinity(),
-                                   +std::numeric_limits<float>::infinity()};
+constexpr inline interval empty_interval{};
+constexpr inline interval universe{-std::numeric_limits<double>::infinity(),
+                                   +std::numeric_limits<double>::infinity()};
 } // namespace cg

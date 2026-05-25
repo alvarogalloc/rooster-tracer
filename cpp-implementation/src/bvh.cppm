@@ -11,15 +11,16 @@ struct bvh_node
     //
     // if not, we are in an intermediate one, use left_child_or_first_index as
     // left and left_child_or_first_index+1 as right
-    vec3 box_min;
+  glm::vec3 box_min;
     std::uint32_t left_child_or_first_index;
-    vec3 box_max;
+    glm::vec3 box_max;
     std::uint32_t triangle_count;
     bool is_leaf() const noexcept
     {
         return triangle_count > 0;
     }
 };
+static_assert(sizeof(bvh_node) == 32, "aabb has unexpected padding");
 
 struct bvh
 {

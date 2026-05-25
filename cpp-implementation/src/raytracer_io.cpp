@@ -2,8 +2,10 @@ module raytracer;
 import stb;
 import std;
 
-namespace cg
+namespace
 {
+using namespace cg;
+
 void save_png(std::string_view path, int width, int height,
               std::span<const color_rgb> image)
 {
@@ -27,6 +29,10 @@ void save_png(std::string_view path, int width, int height,
             std::format("save_png: failed to write '{}'", path)};
     }
 }
+
+} // namespace
+namespace cg
+{
 
 void render_to_png(const scene& scene_data, std::string_view path)
 {

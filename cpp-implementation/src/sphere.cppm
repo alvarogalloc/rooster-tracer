@@ -11,7 +11,7 @@ export namespace cg
 {
 struct sphere
 {
-    float radius;
+    double radius;
     vec3 pos;
     std::size_t material_id{0};
 };
