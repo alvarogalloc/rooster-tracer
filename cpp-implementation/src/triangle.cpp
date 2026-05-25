@@ -73,8 +73,6 @@ std::optional<hitevent> get_ray_triangle_hit(const triangle& tt,
     hit.normal = vec3{normal.x, normal.y, normal.z};
 
     hit.m_id = tt.material_id;
-    if (v0.uv + v1.uv + v2.uv == vec2{0, 0})
-        return hit;
     // compute_uv
     hit.uv = v0.uv * bary_w + v1.uv * bary_u + v2.uv * bary_v;
 
