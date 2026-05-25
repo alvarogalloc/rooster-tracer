@@ -22,44 +22,50 @@ cg::material apply_texture_and_normals(const cg::scene& scene_data,
                                        cg::hitevent& hit)
 {
     cg::material shaded = base;
-    if (base.texture_id || base.normal_map_id)
+    if (!base.texture_id && !base.normal_map_id)
         return base;
 
-    const std::size_t texid = *base.texture_id;
-    // texture map
-    if (texid >= scene_data.textures.size())
-        return base;
-    const cg::color_rgb tex_color =
-        cg::sample_texture(scene_data.textures.at(texid), hit.uv);
-    shaded.diffuse = cg::color_rgb{base.diffuse * tex_color};
-    shaded.ambient = cg::color_rgb{base.ambient * tex_color};
-
-    const std::size_t mapid = *base.normal_map_id;
-    // normal map
-    if (mapid >= scene_data.textures.size())
-        return base;
-
-    const cg::color_rgb norm_color =
-        cg::sample_texture(scene_data.textures.at(mapid), hit.uv);
-
-    // Map [0, 1] to [-1, 1]
-    vec3 map_n =
-        vec3(norm_color.x, norm_color.y, norm_color.z) * 2.0 - vec3(1.0);
-
-    // Gram-Schmmapidt orthogonalization for TBN
-    vec3 t =
-        glm::normalize(hit.dpdu - hit.normal * glm::dot(hit.dpdu, hit.normal));
-    vec3 b = glm::cross(hit.normal, t);
-
-    // Check handedness
-    if (glm::dot(b, hit.dpdv) < 0.0)
+    if (base.texture_id)
     {
-        b = -b;
+
+        const std::size_t texid = *base.texture_id;
+        // texture map
+        if (texid >= scene_data.textures.size())
+            return base;
+        const cg::color_rgb tex_color =
+            cg::sample_texture(scene_data.textures.at(texid), hit.uv);
+        shaded.diffuse = cg::color_rgb{base.diffuse * tex_color};
+        shaded.ambient = cg::color_rgb{base.ambient * tex_color};
     }
+    if (base.normal_map_id)
+    {
 
-    glm::mat3 tbn{t, b, hit.normal};
-    hit.normal = glm::normalize(tbn * map_n);
+        const std::size_t mapid = *base.normal_map_id;
+        // normal map
+        if (mapid >= scene_data.textures.size())
+            return base;
 
+        const cg::color_rgb norm_color =
+            cg::sample_texture(scene_data.textures.at(mapid), hit.uv);
+
+        // Map [0, 1] to [-1, 1]
+        vec3 map_n =
+            vec3(norm_color.x, norm_color.y, norm_color.z) * 2.0 - vec3(1.0);
+
+        // Gram-Schmmapidt orthogonalization for TBN
+        vec3 t = glm::normalize(hit.dpdu -
+                                hit.normal * glm::dot(hit.dpdu, hit.normal));
+        vec3 b = glm::cross(hit.normal, t);
+
+        // Check handedness
+        if (glm::dot(b, hit.dpdv) < 0.0)
+        {
+            b = -b;
+        }
+
+        glm::mat3 tbn{t, b, hit.normal};
+        hit.normal = glm::normalize(tbn * map_n);
+    }
     return shaded;
 }
 
@@ -107,7 +113,7 @@ color_rgb shade_hit(const scene& scene_data, const hitevent& hit_in,
         apply_texture_and_normals(scene_data, material_data, hit);
     color_rgb result = material_shaded.ambient;
 
-    constexpr static double kShadowBias = 1e-3;
+    constexpr static double kShadowBias = 1e-5;
     const auto occlusion_visitor = overload{
         [&](const auto& l) {
             const auto [shadow_ray, shadow_range] =
@@ -118,6 +124,7 @@ color_rgb shade_hit(const scene& scene_data, const hitevent& hit_in,
         },
     };
 
+    auto shade_fn = shade_visitor(hit, material_shaded, view_dir);
     for (const auto& light_data : scene_data.lights)
     {
         const bool is_blocked = std::visit(occlusion_visitor, light_data);
@@ -125,8 +132,7 @@ color_rgb shade_hit(const scene& scene_data, const hitevent& hit_in,
         if (is_blocked)
             continue;
 
-        result += std::visit(shade_visitor(hit, material_shaded, view_dir),
-                             light_data);
+        result += std::visit(shade_fn, light_data);
     }
     return result;
 }
