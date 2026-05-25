@@ -4,6 +4,7 @@ import mesh3d;
 import sphere;
 import light;
 import directional_light;
+import variant_overload;
 import point_light;
 import material;
 import plane;
@@ -14,115 +15,75 @@ import std;
 
 namespace
 {
-template <class... Ts> struct overload : Ts...
-{
-    using Ts::operator()...;
-};
 
-constexpr float kShadowBias = 1e-3f;
-
+using namespace cg;
 cg::material apply_texture_and_normals(const cg::scene& scene_data,
-                                       const cg::material& base, cg::hitevent& hit)
+                                       const cg::material& base,
+                                       cg::hitevent& hit)
 {
     cg::material shaded = base;
-    if (base.texture_id)
-    {
-        const std::size_t id = *base.texture_id;
-        if (id < scene_data.textures.size())
-        {
-            const cg::color_rgb tex_color =
-                cg::sample_texture(scene_data.textures.at(id), hit.uv);
-            shaded.diffuse = cg::color_rgb{base.diffuse * tex_color};
-            shaded.ambient = cg::color_rgb{base.ambient * tex_color};
-        }
-    }
-    
-    if (base.normal_map_id)
-    {
-        const std::size_t id = *base.normal_map_id;
-        if (id < scene_data.textures.size())
-        {
-            const cg::color_rgb norm_color =
-                cg::sample_texture(scene_data.textures.at(id), hit.uv);
-            
-            // Map [0, 1] to [-1, 1]
-            glm::vec3 map_n = glm::vec3(norm_color.x, norm_color.y, norm_color.z) * 2.0f - glm::vec3(1.0f);
-            
-            // Gram-Schmidt orthogonalization for TBN
-            glm::vec3 t = glm::normalize(hit.dpdu - hit.normal * glm::dot(hit.dpdu, hit.normal));
-            glm::vec3 b = glm::cross(hit.normal, t);
-            
-            // Check handedness
-            if (glm::dot(b, hit.dpdv) < 0.0f) {
-                b = -b;
-            }
+    if (base.texture_id || base.normal_map_id)
+        return base;
 
-            glm::mat3 tbn{t, b, hit.normal};
-            hit.normal = glm::normalize(tbn * map_n);
-        }
+    const std::size_t texid = *base.texture_id;
+    // texture map
+    if (texid >= scene_data.textures.size())
+        return base;
+    const cg::color_rgb tex_color =
+        cg::sample_texture(scene_data.textures.at(texid), hit.uv);
+    shaded.diffuse = cg::color_rgb{base.diffuse * tex_color};
+    shaded.ambient = cg::color_rgb{base.ambient * tex_color};
+
+    const std::size_t mapid = *base.normal_map_id;
+    // normal map
+    if (mapid >= scene_data.textures.size())
+        return base;
+
+    const cg::color_rgb norm_color =
+        cg::sample_texture(scene_data.textures.at(mapid), hit.uv);
+
+    // Map [0, 1] to [-1, 1]
+    vec3 map_n =
+        vec3(norm_color.x, norm_color.y, norm_color.z) * 2.0 - vec3(1.0);
+
+    // Gram-Schmmapidt orthogonalization for TBN
+    vec3 t =
+        glm::normalize(hit.dpdu - hit.normal * glm::dot(hit.dpdu, hit.normal));
+    vec3 b = glm::cross(hit.normal, t);
+
+    // Check handedness
+    if (glm::dot(b, hit.dpdv) < 0.0)
+    {
+        b = -b;
     }
-    
+
+    glm::mat3 tbn{t, b, hit.normal};
+    hit.normal = glm::normalize(tbn * map_n);
+
     return shaded;
 }
 
 bool is_occluded(const cg::scene& scene_data, cg::ray ray_data,
                  cg::interval hit_range)
 {
+    const auto visitor = cg::primitive_visitor(scene_data, ray_data, hit_range);
     for (const auto& object : scene_data.objects)
     {
-        const bool hit =
-            object
-                .visit(overload{
-                    [&](const cg::triangle& tri) {
-                        return get_ray_triangle_hit(tri, scene_data.vertices,
-                                                    ray_data, hit_range);
-                    },
-                    [&](const cg::sphere& sph) {
-                        return get_ray_sphere_hit(sph, ray_data, hit_range);
-                    },
-                    [&](const cg::mesh3d& mesh) {
-                        return get_ray_mesh_hit(mesh, scene_data.mesh_triangles,
-                                                scene_data.vertices, ray_data,
-                                                hit_range);
-                    },
-                    [&](const cg::plane& p) {
-                        return get_ray_plane_hit(p, ray_data, hit_range);
-                    },
-                })
-                .has_value();
+        const bool hit = std::visit(visitor, object).has_value();
         if (hit)
             return true;
     }
     return false;
 }
-} // namespace
-
-namespace cg
-{
 std::optional<hitevent> find_closest_hit(const scene& scene_data, ray ray_data)
 {
     std::optional<hitevent> closest_hit;
     const interval hit_range{scene_data.camera_data.near,
                              scene_data.camera_data.far};
+    const auto visitor = primitive_visitor(scene_data, ray_data, hit_range);
     for (const auto& object : scene_data.objects)
     {
-        std::optional<hitevent> hit = object.visit(overload{
-            [&](const triangle& tri) {
-                return get_ray_triangle_hit(tri, scene_data.vertices, ray_data,
-                                            hit_range);
-            },
-            [&](const sphere& sph) {
-                return get_ray_sphere_hit(sph, ray_data, hit_range);
-            },
-            [&](const mesh3d& mesh) {
-                return get_ray_mesh_hit(mesh, scene_data.mesh_triangles,
-                                        scene_data.vertices, ray_data,
-                                        hit_range);
-            },
-            [&](const plane& p) {
-                return get_ray_plane_hit(p, ray_data, hit_range);
-            },
-        });
+        std::optional<hitevent> hit = std::visit(visitor, object);
 
         if (!hit || (closest_hit && hit->t >= closest_hit->t))
             continue;
@@ -131,7 +92,8 @@ std::optional<hitevent> find_closest_hit(const scene& scene_data, ray ray_data)
     return closest_hit;
 }
 
-color_rgb shade_hit(const scene& scene_data, const hitevent& hit_in, vec3 view_dir)
+color_rgb shade_hit(const scene& scene_data, const hitevent& hit_in,
+                    vec3 view_dir)
 {
     if (hit_in.m_id >= scene_data.materials.size())
     {
@@ -141,49 +103,38 @@ color_rgb shade_hit(const scene& scene_data, const hitevent& hit_in, vec3 view_d
 
     hitevent hit = hit_in;
     const material& material_data = scene_data.materials.at(hit.m_id);
-    const material shaded = apply_texture_and_normals(scene_data, material_data, hit);
-    color_rgb result = shaded.ambient;
+    const material material_shaded =
+        apply_texture_and_normals(scene_data, material_data, hit);
+    color_rgb result = material_shaded.ambient;
+
+    constexpr static double kShadowBias = 1e-3;
+    const auto occlusion_visitor = overload{
+        [&](const auto& l) {
+            const auto [shadow_ray, shadow_range] =
+                get_shadow_info(l, hit, kShadowBias);
+            if (shadow_range.size() == 0.)
+                return false;
+            return is_occluded(scene_data, shadow_ray, shadow_range);
+        },
+    };
+
     for (const auto& light_data : scene_data.lights)
     {
-        const bool blocked = std::visit(
-            overload{
-                [&](const directional_light& l) {
-                    const vec3 shadow_origin = hit.p + hit.normal * kShadowBias;
-                    const vec3 light_dir = -l.dir;
-                    const ray shadow_ray{shadow_origin, light_dir};
-                    const interval shadow_range{
-                        kShadowBias, std::numeric_limits<float>::infinity()};
-                    return is_occluded(scene_data, shadow_ray, shadow_range);
-                },
-                [&](const point_light& l) {
-                    const vec3 to_light = l.pos - hit.p;
-                    const float light_distance = glm::length(to_light);
-                    if (light_distance <= kShadowBias)
-                        return false;
-                    const vec3 shadow_origin = hit.p + hit.normal * kShadowBias;
-                    const ray shadow_ray{shadow_origin, to_light};
-                    const interval shadow_range{kShadowBias,
-                                                light_distance - kShadowBias};
-                    return is_occluded(scene_data, shadow_ray, shadow_range);
-                },
-            },
-            light_data);
-        if (blocked)
+        const bool is_blocked = std::visit(occlusion_visitor, light_data);
+
+        if (is_blocked)
             continue;
 
-        result += std::visit(
-            overload{
-                [&](const directional_light& l) {
-                    return shade_phong(shaded, hit, l, view_dir);
-                },
-                [&](const point_light& l) {
-                    return shade_phong(shaded, hit, l, view_dir);
-                },
-            },
-            light_data);
+        result += std::visit(shade_visitor(hit, material_shaded, view_dir),
+                             light_data);
     }
     return result;
 }
+
+} // namespace
+
+namespace cg
+{
 
 color_rgb trace_ray(const scene& scene_data, ray ray_data, int depth)
 {

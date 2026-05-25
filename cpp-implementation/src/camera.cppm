@@ -8,12 +8,12 @@ struct camera
 {
     int width{1280};
     int height{720};
-    float fov{1.0472f};
-    vec3 pos{0.f, 2.f, 5.f};
-    vec3 up{0.f, 1.f, 0.f};
-    vec3 lookAt{0.f, -1.f, -4.f};
-    float far{20.f};
-    float near{0.001f};
+    double fov{1.0472};
+    vec3 pos{0., 2., 5.};
+    vec3 up{0., 1., 0.};
+    vec3 lookAt{0., -1., -4.};
+    double far{20.};
+    double near{0.001};
     vec3 screen_to_ndc(int x, int y) const;
     ray compute_ray(int x, int y, vec3 forward, vec3 right, vec3 upVec) const;
     void cast_all_rays(std::function<void(ray, int, int)> ray_callback) const;
@@ -23,11 +23,11 @@ vec3 camera::screen_to_ndc(int x, int y) const
 {
     if (height == 0)
         return vec3{0, 0, 0};
-    const float aspectRatio =
-        static_cast<float>(width) / static_cast<float>(height);
+    const double aspectRatio =
+        static_cast<double>(width) / static_cast<double>(height);
     return vec3{
-        (2 * ((x + 0.5f) / width) - 1) * std::tan(fov / 2) * aspectRatio,
-        (1 - 2 * ((y + 0.5f) / height)) * std::tan(fov / 2),
+        (2 * ((x + 0.5) / width) - 1) * std::tan(fov / 2) * aspectRatio,
+        (1 - 2 * ((y + 0.5) / height)) * std::tan(fov / 2),
         0,
     };
 }

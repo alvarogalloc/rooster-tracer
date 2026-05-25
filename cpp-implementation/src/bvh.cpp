@@ -12,7 +12,7 @@ constexpr std::uint32_t kBinCount{16};
 
 [[nodiscard]] aabb empty_aabb()
 {
-    const float inf = std::numeric_limits<float>::infinity();
+    const double inf = std::numeric_limits<double>::infinity();
     return aabb{.min = {inf, inf, inf}, .max = {-inf, -inf, -inf}};
 }
 
@@ -47,18 +47,18 @@ void extend(aabb& box, const aabb& other)
                 .max = glm::max(p0, glm::max(p1, p2))};
 }
 
-[[nodiscard]] float surface_area(const aabb& box)
+[[nodiscard]] double surface_area(const aabb& box)
 {
     const vec3 e = box.max - box.min;
-    return 2.0f * (e.x * e.y + e.x * e.z + e.y * e.z);
+    return 2.0 * (e.x * e.y + e.x * e.z + e.y * e.z);
 }
 
-[[nodiscard]] float axis_value(const vec3& v, int axis)
+[[nodiscard]] double axis_value(const vec3& v, int axis)
 {
     return axis == 0 ? v.x : axis == 1 ? v.y : v.z;
 }
 
-[[nodiscard]] int bin_index(float c, float axis_min, float inv_bin_size)
+[[nodiscard]] int bin_index(double c, double axis_min, double inv_bin_size)
 {
     return std::clamp(static_cast<int>((c - axis_min) * inv_bin_size), 0,
                       static_cast<int>(kBinCount) - 1);
@@ -84,18 +84,18 @@ struct sah_split
     std::uint32_t right_count;
     aabb left_bounds;
     aabb right_bounds;
-    float cost;
+    double cost;
 };
 
 [[nodiscard]] std::array<bin, kBinCount> build_bins(
     std::span<const std::uint32_t> indices, std::span<const vec3> centroids,
-    std::span<const aabb> tri_bounds, int axis, float axis_min,
-    float inv_bin_size)
+    std::span<const aabb> tri_bounds, int axis, double axis_min,
+    double inv_bin_size)
 {
     std::array<bin, kBinCount> bins{};
     for (const std::uint32_t tri_index : indices)
     {
-        const float c = axis_value(centroids[tri_index], axis);
+        const double c = axis_value(centroids[tri_index], axis);
         const int index = bin_index(c, axis_min, inv_bin_size);
         bins[index].count += 1;
         extend(bins[index].bounds, tri_bounds[tri_index]);
@@ -140,25 +140,25 @@ struct sah_split
     std::span<const aabb> tri_bounds, const aabb& centroid_bounds, int axis)
 {
     const vec3 extent = centroid_bounds.max - centroid_bounds.min;
-    const float axis_extent = axis_value(extent, axis);
-    if (axis_extent <= std::numeric_limits<float>::epsilon())
+    const double axis_extent = axis_value(extent, axis);
+    if (axis_extent <= std::numeric_limits<double>::epsilon())
         return std::nullopt;
 
-    const float axis_min = axis_value(centroid_bounds.min, axis);
-    const float inv_bin_size = static_cast<float>(kBinCount) / axis_extent;
+    const double axis_min = axis_value(centroid_bounds.min, axis);
+    const double inv_bin_size = static_cast<double>(kBinCount) / axis_extent;
     const auto bins = build_bins(indices, centroids, tri_bounds, axis, axis_min,
                                  inv_bin_size);
     const auto left = prefix_sums(bins);
     const auto right = suffix_sums(bins);
 
     std::optional<sah_split> best{};
-    float best_cost = std::numeric_limits<float>::infinity();
+    double best_cost = std::numeric_limits<double>::infinity();
     for (std::uint32_t split = 0; split + 1 < kBinCount; ++split)
     {
         if (left.counts[split] == 0 || right.counts[split + 1] == 0)
             continue;
 
-        const float cost =
+        const double cost =
             left.counts[split] * surface_area(left.bounds[split]) +
             right.counts[split + 1] * surface_area(right.bounds[split + 1]);
         if (cost < best_cost)
@@ -209,7 +209,7 @@ struct sah_split
 [[nodiscard]] bool is_degenerate(const aabb& bounds)
 {
     const vec3 extent = bounds.max - bounds.min;
-    return extent.x <= 0.f && extent.y <= 0.f && extent.z <= 0.f;
+    return extent.x <= 0. && extent.y <= 0. && extent.z <= 0.;
 }
 
 [[nodiscard]] std::uint32_t partition_by_split(std::span<std::uint32_t> indices,
@@ -218,14 +218,14 @@ struct sah_split
                                                const sah_split& split)
 {
     const vec3 extent = centroid_bounds.max - centroid_bounds.min;
-    const float axis_extent = axis_value(extent, split.axis);
-    if (axis_extent <= std::numeric_limits<float>::epsilon())
+    const double axis_extent = axis_value(extent, split.axis);
+    if (axis_extent <= std::numeric_limits<double>::epsilon())
         return 0;
 
-    const float axis_min = axis_value(centroid_bounds.min, split.axis);
-    const float inv_bin_size = static_cast<float>(kBinCount) / axis_extent;
+    const double axis_min = axis_value(centroid_bounds.min, split.axis);
+    const double inv_bin_size = static_cast<double>(kBinCount) / axis_extent;
     const auto mid_it = std::ranges::partition(indices, [&](std::uint32_t i) {
-        const float c = axis_value(centroids[i], split.axis);
+        const double c = axis_value(centroids[i], split.axis);
         return static_cast<std::uint32_t>(
                    bin_index(c, axis_min, inv_bin_size)) <= split.split_bin;
     });
@@ -302,7 +302,7 @@ void fill_triangle_data(std::span<const triangle> mesh_tris,
         const vec3& p1 = vertices[tri.vertex_start + 1].p;
         const vec3& p2 = vertices[tri.vertex_start + 2].p;
 
-        centroids[i] = (p0 + p1 + p2) / 3.f;
+        centroids[i] = (p0 + p1 + p2) / 3.;
         tri_bounds[i] = triangle_bounds(p0, p1, p2);
     }
 }

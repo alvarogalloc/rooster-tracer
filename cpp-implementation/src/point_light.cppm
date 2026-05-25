@@ -1,17 +1,29 @@
 export module point_light;
 import color_rgb;
 import glm;
+import hitevent;
+import std;
+import interval;
+import ray;
+
+import material;
 
 export namespace cg
 {
 struct point_light
 {
-    point_light(vec3 p, color_rgb c, float i) : pos(p), color(c), intensity(i)
+    point_light(vec3 p, color_rgb c, double i) : pos(p), color(c), intensity(i)
     {
     }
 
     vec3 pos;
     color_rgb color;
-    float intensity;
+    double intensity;
 };
+[[nodiscard]] color_rgb shade_phong(const material& m, const hitevent& he,
+                                    const point_light& l, vec3 view_dir);
+
+auto get_shadow_info(const point_light& light, const hitevent& hit,
+                     const double kShadowBias) -> std::pair<ray, interval>;
+
 } // namespace cg

@@ -31,13 +31,13 @@ std::optional<hitevent> get_ray_plane_hit(const plane& p, ray r, interval i)
         return std::nullopt;
     }
 
-    const bool front_face = denominator < 0.0f;
+    const bool front_face = denominator < 0.0;
     const auto normal = front_face ? p.normal : -p.normal;
     const hitevent ev{
         .t = t,
         .p = r.at(t),
         .normal = normal,
-        .uv = vec2{0.f, 0.f},
+        .uv = vec2{0., 0.},
         .m_id = p.material_id,
     };
     return ev;

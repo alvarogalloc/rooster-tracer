@@ -6,10 +6,10 @@ namespace
 {
 using namespace cg;
 
-[[nodiscard]] float wrap_uv(float v)
+[[nodiscard]] double wrap_uv(double v)
 {
-    const float wrapped = v - std::floor(v);
-    return wrapped < 0.f ? wrapped + 1.f : wrapped;
+    const double wrapped = v - std::floor(v);
+    return wrapped < 0. ? wrapped + 1. : wrapped;
 }
 
 [[nodiscard]] int texel_index(int x, int y, int width)
@@ -37,7 +37,7 @@ namespace cg
     const std::size_t pixel_count =
         static_cast<std::size_t>(width) * static_cast<std::size_t>(height);
     std::vector<color_rgb> pixels(pixel_count);
-    const float inv = 1.f / 255.99f;
+    const double inv = 1. / 255.99;
     for (std::size_t i = 0; i < pixel_count; ++i)
     {
         const std::size_t base = i * 3;
@@ -52,15 +52,15 @@ namespace cg
 [[nodiscard]] color_rgb sample_texture(const texture& tex, vec2 uv)
 {
     if (tex.pixels.empty() || tex.width <= 0 || tex.height <= 0)
-        return color_rgb{1.f, 1.f, 1.f};
+        return color_rgb{1., 1., 1.};
 
-    const float u = wrap_uv(uv.x);
-    const float v = wrap_uv(uv.y);
+    const double u = wrap_uv(uv.x);
+    const double v = wrap_uv(uv.y);
     const int x = std::clamp(
-        static_cast<int>(u * static_cast<float>(tex.width)), 0,
+        static_cast<int>(u * static_cast<double>(tex.width)), 0,
         tex.width - 1);
     const int y = std::clamp(
-        static_cast<int>(v * static_cast<float>(tex.height)), 0,
+        static_cast<int>(v * static_cast<double>(tex.height)), 0,
         tex.height - 1);
     return tex.pixels.at(
         static_cast<std::size_t>(texel_index(x, y, tex.width)));

@@ -9,9 +9,9 @@ std::optional<std::string> validate_scene_for_render(const scene& scene_data)
     const auto& camera_data = scene_data.camera_data;
     if (camera_data.width <= 0 || camera_data.height <= 0)
         return "viewport width and height must be > 0";
-    if (camera_data.fov <= 0.f || camera_data.fov >= glm::pi<float>())
+    if (camera_data.fov <= 0. || camera_data.fov >= glm::pi<double>())
         return "fov must be in (0, PI) radians";
-    if (camera_data.near <= 0.f)
+    if (camera_data.near <= 0.)
         return "near plane must be > 0";
     if (camera_data.far <= camera_data.near)
         return "far plane must be greater than near plane";

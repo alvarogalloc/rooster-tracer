@@ -12,10 +12,8 @@ export namespace cg
 struct vertex
 {
     vec3 p;
-    vec3 n{0.f, 0.f, 0.f};
-    vec2 uv{0.f, 0.f};
-    bool has_normal{false};
-    bool has_uv{false};
+    vec3 n{0., 0., 0.};
+    vec2 uv{0., 0.};
 };
 struct triangle
 {

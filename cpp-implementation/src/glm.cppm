@@ -1,9 +1,10 @@
 module;
-
+#define GLM_FORCE_DEFAULT_PRECISION_DOUBLE
 #define GLM_GTC_INLINE_NAMESPACE
 #define GLM_EXT_INLINE_NAMESPACE
 #define GLM_GTX_INLINE_NAMESPACE
 #define GLM_ENABLE_EXPERIMENTAL
+#define GLM_FORCE_CONSTEXPR
 
 #include "glm/ext.hpp"
 #include "glm/glm.hpp"
@@ -2671,8 +2672,17 @@ using glm::zero;
 
 export namespace cg
 {
-using vec3 = glm::vec3;
-using vec2 = glm::vec2;
+using vec3 = glm::dvec3;
+using vec2 = glm::dvec2;
+
+[[nodiscard]] vec3 safe_normalize(vec3 v, double epsilonsq = 1e-8)
+{
+
+    const double len_sq = glm::dot(v, v);
+    if (len_sq <= epsilonsq)
+        return vec3{0.f, 0.f, 0.f};
+    return v * glm::inversesqrt(len_sq);
+}
 
 } // namespace cg
 

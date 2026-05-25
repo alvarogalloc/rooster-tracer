@@ -12,25 +12,25 @@ std::optional<hitevent> get_ray_sphere_hit(const sphere& s, ray r, interval i)
 
     auto discriminant = h * h - a * c;
 
-    if (discriminant < 0.f)
+    if (discriminant < 0.)
     {
         return std::nullopt;
     }
 
-    const float sqrt_discriminant = std::sqrt(discriminant);
-    float t = (h - sqrt_discriminant) / a;
-    if (t < 0.f || !i.contains(t))
+    const double sqrt_discriminant = std::sqrt(discriminant);
+    double t = (h - sqrt_discriminant) / a;
+    if (t < 0. || !i.contains(t))
     {
         t = (h + sqrt_discriminant) / a;
-        if (t < 0.f || !i.contains(t))
+        if (t < 0. || !i.contains(t))
             return std::nullopt;
     }
     auto normal = glm::normalize((r.at(t) - s.pos) / s.radius);
-    if (glm::dot(normal, r.dir) > 0.f)
+    if (glm::dot(normal, r.dir) > 0.)
     {
         normal = -normal;
     }
-    return hitevent{.t = t, .p = r.at(t), .normal = normal, .uv = vec2{0.f, 0.f}, .m_id = s.material_id};
+    return hitevent{.t = t, .p = r.at(t), .normal = normal, .uv = vec2{0., 0.}, .m_id = s.material_id};
 }
 
 } // namespace cg

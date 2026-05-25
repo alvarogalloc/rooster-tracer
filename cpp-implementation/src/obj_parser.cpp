@@ -14,7 +14,7 @@ namespace cg::parsers
 namespace
 {
 constexpr int kMissingIndex = -1;
-constexpr float kNormalEpsLen2 = 1e-12f;
+constexpr double kNormalEpsLen2 = 1e-12f;
 
 struct face_vertex_ref
 {
@@ -41,9 +41,9 @@ struct face_info
 
 [[nodiscard]] vec3 safe_normalize(vec3 v)
 {
-    const float len_sq = glm::dot(v, v);
+    const double len_sq = glm::dot(v, v);
     if (len_sq <= kNormalEpsLen2)
-        return vec3{0.f, 0.f, 0.f};
+        return vec3{0., 0., 0.};
     return v * glm::inversesqrt(len_sq);
 }
 
@@ -51,7 +51,7 @@ struct face_info
 {
     vec2 v;
     if (!(ss >> v.x >> v.y))
-        return {0.f, 0.f};
+        return {0., 0.};
     return v;
 }
 
@@ -63,9 +63,9 @@ struct face_info
     return v;
 }
 
-[[nodiscard]] std::optional<float> parse_float_optional(std::istringstream& ss)
+[[nodiscard]] std::optional<double> parse_float_optional(std::istringstream& ss)
 {
-    float v = 0.f;
+    double v = 0.;
     if (!(ss >> v))
         return std::nullopt;
     return v;
@@ -178,8 +178,8 @@ struct mtl_material
     std::optional<vec3> diffuse;   // Kd
     std::optional<vec3> specular;  // Ks
     std::optional<vec3> emissive;  // Ke
-    std::optional<float> shininess; // Ns
-    std::optional<float> dissolve;  // d / Tr
+    std::optional<double> shininess; // Ns
+    std::optional<double> dissolve;  // d / Tr
     std::optional<int>   illum;     // illumination model
     std::optional<std::string> diffuse_map;  // map_Kd
     std::optional<std::string> specular_map; // map_Ks
@@ -220,7 +220,7 @@ struct mtl_material
     const std::optional<std::size_t>& normal_map_id = std::nullopt)
 {
     const color_rgb diffuse =
-        src.diffuse ? color_rgb{*src.diffuse} : color_rgb{1.f, 1.f, 1.f};
+        src.diffuse ? color_rgb{*src.diffuse} : color_rgb{1., 1., 1.};
 
     // Blender always exports Ka 1 1 1 (a convention, not the real ambient).
     // Derive ambient from Kd so the material colour is preserved.
@@ -231,7 +231,7 @@ struct mtl_material
     {
         const vec3 ka = *src.ambient;
         const bool is_white_ka =
-            ka.x >= 0.99f && ka.y >= 0.99f && ka.z >= 0.99f;
+            ka.x >= 0.99 && ka.y >= 0.99 && ka.z >= 0.99;
         ambient = is_white_ka
                       ? color_rgb{diffuse * kDefaultAmbientFactor}
                       : color_rgb{ka * kDefaultAmbientFactor};
@@ -242,10 +242,10 @@ struct mtl_material
     }
 
     const color_rgb specular =
-        src.specular ? color_rgb{*src.specular} : color_rgb{0.5f, 0.5f, 0.5f};
+        src.specular ? color_rgb{*src.specular} : color_rgb{0.5, 0.5, 0.5};
 
     // Ns in MTL is 0..1000; pass directly – phong_brdf clamps below 1.
-    const float shininess = src.shininess.value_or(kDefaultShininess);
+    const double shininess = src.shininess.value_or(kDefaultShininess);
 
     return material{
         .ambient = ambient,
@@ -370,7 +370,7 @@ void parse_mtl_file(const std::string& filename, scene& s,
             // Tr = 1 - d
             const auto tr = parse_float_optional(ss);
             if (tr)
-                current.dissolve = 1.f - *tr;
+                current.dissolve = 1. - *tr;
             continue;
         }
         if (type == "illum")
@@ -410,7 +410,7 @@ void parse_mtl_file(const std::string& filename, scene& s,
             // Handle optional bump multiplier e.g. -bm 1.000000
             if (map_path == "-bm")
             {
-                float multiplier;
+                double multiplier;
                 ss >> multiplier;
                 ss >> map_path;
             }
@@ -507,7 +507,7 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
     }
 
     std::vector<vec3> generated_normals(obj_positions.size(),
-                                        vec3{0.f, 0.f, 0.f});
+                                        vec3{0., 0., 0.});
     for (const auto& face : faces)
     {
         const auto& verts = face.vertices;
@@ -551,7 +551,7 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
             auto pick_uv = [&](const face_vertex_ref& ref) {
                 if (ref.uv_idx >= 0)
                     return obj_uvs.at(ref.uv_idx);
-                return vec2{0.f, 0.f};
+                return vec2{0., 0.};
             };
 
             const auto base_vertex = s.vertices.size();
@@ -559,22 +559,16 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
                 .p = p0,
                 .n = pick_normal(f0),
                 .uv = pick_uv(f0),
-                .has_normal = true,
-                .has_uv = f0.uv_idx >= 0,
             });
             s.vertices.push_back(vertex{
                 .p = p1,
                 .n = pick_normal(f1),
                 .uv = pick_uv(f1),
-                .has_normal = true,
-                .has_uv = f1.uv_idx >= 0,
             });
             s.vertices.push_back(vertex{
                 .p = p2,
                 .n = pick_normal(f2),
                 .uv = pick_uv(f2),
-                .has_normal = true,
-                .has_uv = f2.uv_idx >= 0,
             });
 
             s.mesh_triangles.push_back(triangle{
@@ -603,7 +597,7 @@ void parse_obj_file(std::istringstream& ss, scene& s)
     const std::string filename = resolve_obj_path(filename_token, s.source_dir);
 
     vec3 origin{0, 0, 0};
-    float ox{}, oy{}, oz{};
+    double ox{}, oy{}, oz{};
     if (ss >> ox >> oy >> oz)
         origin = vec3{ox, oy, oz};
     else

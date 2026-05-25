@@ -7,10 +7,11 @@ struct ray
 {
     vec3 pos;
     vec3 dir;
-    ray(vec3 pos, vec3 dir) : pos(pos), dir(glm::normalize(dir))
+    constexpr ray(vec3 pos, vec3 dir) noexcept
+        : pos(pos), dir(glm::normalize(dir))
     {
     }
-    auto at(const float t)
+    auto at(const double t)
     {
         return pos + dir * t;
     }

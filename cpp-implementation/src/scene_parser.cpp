@@ -22,7 +22,7 @@ void parse_dir_light(std::istringstream& ss, scene& s)
     //<dir> <color> <intensity>
     const auto dir = parse_vec3(ss);
     const auto color = parse_color(ss);
-    float intensity = 1.f;
+    double intensity = 1.;
     if (!(ss >> intensity))
     {
         std::println(std::cerr,
@@ -50,7 +50,7 @@ void parse_point_light(std::istringstream& ss, scene& s)
     // of the form point_light x y z r g b intensity
     const auto pos = parse_vec3(ss);
     const auto color = parse_color(ss);
-    float intensity = 1.f;
+    double intensity = 1.;
     if (!(ss >> intensity))
     {
         std::println(std::cerr,
@@ -82,8 +82,8 @@ void parse_camera(std::istringstream& ss, scene& s)
     const vec3 pos = parse_vec3(ss);
     const vec3 look_at = parse_vec3(ss);
     const vec3 up = parse_vec3(ss);
-    float near_plane = s.camera_data.near;
-    float far_plane = s.camera_data.far;
+    double near_plane = s.camera_data.near;
+    double far_plane = s.camera_data.far;
     if (!(ss >> near_plane >> far_plane))
     {
         std::println(std::cerr,
@@ -106,7 +106,7 @@ void parse_camera(std::istringstream& ss, scene& s)
 
 void parse_fov(std::istringstream& ss, scene& s)
 {
-    float degrees = 0.f;
+    double degrees = 0.;
     if (!(ss >> degrees))
     {
         std::println(std::cerr, "bad fov (expected degrees)");

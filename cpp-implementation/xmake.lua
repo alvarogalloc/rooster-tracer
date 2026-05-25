@@ -3,7 +3,7 @@ add_rules("mode.debug", "mode.release")
 add_requires("stb", "glm")
 
 target("cpp-raytracer")
-    set_policy("build.optimization.lto", true)
+    -- set_policy("build.optimization.lto", true)
     set_kind("binary")
     set_languages("c++latest")
     
