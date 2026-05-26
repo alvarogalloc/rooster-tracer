@@ -251,11 +251,13 @@ void subdivide(cg::bvh& b, std::span<const vec3> centroids,
                std::span<const aabb> tri_bounds, std::uint32_t node_index)
 {
     auto& node = b.nodes.at(node_index);
-    // salimos si somos una caja que podemos recorrer en O(n), porque tenemos maximo kMaxLeafTriangles como n
+    // salimos si somos una caja que podemos recorrer en O(n), porque tenemos
+    // maximo kMaxLeafTriangles como n
     if (node.triangle_count <= kMaxLeafTriangles)
         return;
 
-    // somos una caja intermedia, entonces left_child_or_first_index es el index para la caja izq.
+    // somos una caja intermedia, entonces left_child_or_first_index es el index
+    // para la caja izq.
     const std::uint32_t first = node.left_child_or_first_index;
     const std::uint32_t count = node.triangle_count;
     auto index_span = std::span{b.tri_indices}.subspan(first, count);
@@ -266,8 +268,8 @@ void subdivide(cg::bvh& b, std::span<const vec3> centroids,
     if (is_degenerate(centroid_bounds))
         return;
 
-    // el mejor corte sera el que la suma de las areas de sus triangulos contenidos sea la maxima, por lo que 
-    // tenemos mas probabilidad de darle
+    // el mejor corte sera el que la suma de las areas de sus triangulos
+    // contenidos sea la maxima, por lo que tenemos mas probabilidad de darle
     const auto split =
         find_best_split(index_span, centroids, tri_bounds, centroid_bounds);
     if (!split)
@@ -281,7 +283,8 @@ void subdivide(cg::bvh& b, std::span<const vec3> centroids,
     std::uint32_t left_index = 0;
     create_children(b, *split, first, left_count, count, left_index);
 
-    // re-fetch node reference because create_children might have reallocated the vector
+    // re-fetch node reference because create_children might have reallocated
+    // the vector
     auto& interior_node = b.nodes.at(node_index);
     interior_node.left_child_or_first_index = left_index;
     interior_node.triangle_count = 0;

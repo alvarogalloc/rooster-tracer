@@ -1,7 +1,7 @@
 BasedOnStyle: Microsoft
 
 ColumnLimit: 80
-
+LineEnding: LF
 PointerAlignment: Left
 
 # Indent case labels within switch statements

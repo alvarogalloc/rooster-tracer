@@ -129,19 +129,19 @@ struct face_info
 }
 
 void parse_face(std::istringstream& ss, std::size_t vertex_count,
-                    std::size_t uv_count, std::size_t normal_count,
-                    std::size_t material_id, std::vector<face_info>& faces)
+                std::size_t uv_count, std::size_t normal_count,
+                std::size_t material_id, std::vector<face_info>& faces)
 {
     face_polygon refs;
     std::string token;
     while (ss >> token)
     {
         refs.push_back(
-                parse_face_token(token, vertex_count, uv_count, normal_count));
+            parse_face_token(token, vertex_count, uv_count, normal_count));
     }
     if (refs.size() >= 3)
-        faces.push_back(face_info{.vertices = std::move(refs),
-                                      .material_id = material_id});
+        faces.push_back(
+            face_info{.vertices = std::move(refs), .material_id = material_id});
 }
 
 [[nodiscard]] vec3 face_normal(const vec3& a, const vec3& b, const vec3& c)
@@ -174,13 +174,13 @@ void parse_face(std::istringstream& ss, std::size_t vertex_count,
 struct mtl_material
 {
     std::string name;
-    std::optional<vec3> ambient;   // Ka – rarely reliable from Blender exports
-    std::optional<vec3> diffuse;   // Kd
-    std::optional<vec3> specular;  // Ks
-    std::optional<vec3> emissive;  // Ke
-    std::optional<double> shininess; // Ns
-    std::optional<double> dissolve;  // d / Tr
-    std::optional<int>   illum;     // illumination model
+    std::optional<vec3> ambient;  // Ka – rarely reliable from Blender exports
+    std::optional<vec3> diffuse;  // Kd
+    std::optional<vec3> specular; // Ks
+    std::optional<vec3> emissive; // Ke
+    std::optional<double> shininess;         // Ns
+    std::optional<double> dissolve;          // d / Tr
+    std::optional<int> illum;                // illumination model
     std::optional<std::string> diffuse_map;  // map_Kd
     std::optional<std::string> specular_map; // map_Ks
     std::optional<std::string> normal_map;   // map_Bump / map_bump / bump
@@ -230,11 +230,9 @@ struct mtl_material
     if (src.ambient)
     {
         const vec3 ka = *src.ambient;
-        const bool is_white_ka =
-            ka.x >= 0.99 && ka.y >= 0.99 && ka.z >= 0.99;
-        ambient = is_white_ka
-                      ? color_rgb{diffuse * kDefaultAmbientFactor}
-                      : color_rgb{ka * kDefaultAmbientFactor};
+        const bool is_white_ka = ka.x >= 0.99 && ka.y >= 0.99 && ka.z >= 0.99;
+        ambient = is_white_ka ? color_rgb{diffuse * kDefaultAmbientFactor}
+                              : color_rgb{ka * kDefaultAmbientFactor};
     }
     else
     {
@@ -269,15 +267,13 @@ void register_mtl_material(
     std::optional<std::size_t> texture_id{};
     if (src.diffuse_map)
     {
-        const std::string path =
-            resolve_asset_path(*src.diffuse_map, mtl_path);
+        const std::string path = resolve_asset_path(*src.diffuse_map, mtl_path);
         texture_id = load_texture_id(s, texture_ids, path);
     }
     std::optional<std::size_t> normal_map_id{};
     if (src.normal_map)
     {
-        const std::string path =
-            resolve_asset_path(*src.normal_map, mtl_path);
+        const std::string path = resolve_asset_path(*src.normal_map, mtl_path);
         normal_map_id = load_texture_id(s, texture_ids, path);
     }
     s.materials.emplace_back(to_material(src, texture_id, normal_map_id));
@@ -292,7 +288,8 @@ void register_mtl_material(
                  "Kd=({}, {}, {}) Ks=({}, {}, {}) Ns={} tex_id={} norm_id={}",
                  src.name, id, m.ambient.x, m.ambient.y, m.ambient.z,
                  m.diffuse.x, m.diffuse.y, m.diffuse.z, m.specular.x,
-                 m.specular.y, m.specular.z, m.shininess, tex_label, norm_label);
+                 m.specular.y, m.specular.z, m.shininess, tex_label,
+                 norm_label);
 }
 
 void parse_mtl_file(const std::string& filename, scene& s,
@@ -402,8 +399,8 @@ void parse_mtl_file(const std::string& filename, scene& s,
                 current.specular_map = map_path;
             continue;
         }
-        if (type == "map_Bump" || type == "map_bump" || type == "bump"
-            || type == "map_Kn" || type == "norm")
+        if (type == "map_Bump" || type == "map_bump" || type == "bump" ||
+            type == "map_Kn" || type == "norm")
         {
             std::string map_path;
             ss >> map_path;
@@ -506,8 +503,7 @@ void parse_obj_file_contents(const std::string& filename, scene& s, vec3 origin,
         }
     }
 
-    std::vector<vec3> generated_normals(obj_positions.size(),
-                                        vec3{0., 0., 0.});
+    std::vector<vec3> generated_normals(obj_positions.size(), vec3{0., 0., 0.});
     for (const auto& face : faces)
     {
         const auto& verts = face.vertices;
