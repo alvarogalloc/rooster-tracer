@@ -10,8 +10,8 @@ namespace cg
     return phong_brdf(m, he, -l.dir, l.radiance(), view_dir);
 }
 
-auto get_shadow_info(const directional_light& light, const hitevent& hit, double kShadowBias)
-    -> std::pair<ray, interval>
+auto get_shadow_info(const directional_light& light, const hitevent& hit,
+                     double kShadowBias) -> std::pair<ray, interval>
 {
     const vec3 shadow_origin = hit.p + hit.normal * kShadowBias;
     const vec3 light_dir = -light.dir;

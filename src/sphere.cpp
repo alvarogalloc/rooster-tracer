@@ -30,7 +30,11 @@ std::optional<hitevent> get_ray_sphere_hit(const sphere& s, ray r, interval i)
     {
         normal = -normal;
     }
-    return hitevent{.t = t, .p = r.at(t), .normal = normal, .uv = vec2{0., 0.}, .m_id = s.material_id};
+    return hitevent{.t = t,
+                    .p = r.at(t),
+                    .normal = normal,
+                    .uv = vec2{0., 0.},
+                    .m_id = s.material_id};
 }
 
 } // namespace cg

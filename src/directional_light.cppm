@@ -26,7 +26,7 @@ struct directional_light
 [[nodiscard]] color_rgb shade_phong(const material& m, const hitevent& he,
                                     const directional_light& l, vec3 view_dir);
 
-auto get_shadow_info(const directional_light& light, const hitevent& hit, double kShadowBias)
-    -> std::pair<ray, interval>;
+auto get_shadow_info(const directional_light& light, const hitevent& hit,
+                     double kShadowBias) -> std::pair<ray, interval>;
 
 } // namespace cg

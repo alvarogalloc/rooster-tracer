@@ -1,6 +1,7 @@
 module raytracer;
 import stb;
 import std;
+import gamma;
 
 namespace
 {
@@ -15,7 +16,8 @@ void save_png(std::string_view path, int width, int height,
 
     for (const color_rgb& c : image)
     {
-        auto [r, g, b] = c.to_rgb_255();
+        const color_rgb encoded{linear_to_srgb(c)};
+        auto [r, g, b] = encoded.to_rgb_255();
         pixels.push_back(r);
         pixels.push_back(g);
         pixels.push_back(b);
