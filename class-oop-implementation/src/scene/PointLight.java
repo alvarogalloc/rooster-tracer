@@ -44,7 +44,7 @@ public class PointLight implements Light {
   public ShadowRay shadowRay(Intersection hit) {
     Vector3D toLight = pos.sub(hit.getPoint());
     float distance = (float) Math.sqrt(toLight.lengthSquared());
-    Vector3D origin = hit.getPoint().add(hit.getNormal().normalize().mul(1e-3f));
+    Vector3D origin = hit.getPoint().add(hit.getNormal().normalize().mul(Light.SHADOW_BIAS));
     return new ShadowRay(new Ray(origin, toLight), distance);
   }
 }

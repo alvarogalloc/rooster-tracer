@@ -8,6 +8,14 @@ public final class Interval {
     this.max = mx;
   }
 
+  public float getMin() {
+    return min;
+  }
+
+  public float getMax() {
+    return max;
+  }
+
   public float size() {
     return max - min;
   }

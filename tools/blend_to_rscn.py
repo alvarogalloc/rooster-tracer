@@ -108,6 +108,7 @@ def export_obj_blender4(obj, obj_path, all_mesh_objects):
             export_normals=True,
             export_uv=True,
             global_scale=1.0,
+            export_pbr_extensions=True,
         )
         ok = True
     except Exception as exc:

@@ -1,0 +1,89 @@
+================================================================================
+LIGHT & ILLUMINATION CALCULATION PATHS AND FORMULAS
+================================================================================
+
+This document details the exact files, functions, and control flow paths involved 
+in the light and illumination calculations within the raytracer codebase.
+
+--------------------------------------------------------------------------------
+1. ENTRY POINT: RAY CASTING & TRACING
+--------------------------------------------------------------------------------
+File: src/raytracer_render.cpp
+Function: cg::render_scene()
+
+Path:
+- Calls `scene_data.camera_data.cast_all_rays()` which casts rays for each pixel.
+- For each ray, calls `trace_ray(scene_data, ray_data, max_depth, background_color)`.
+
+--------------------------------------------------------------------------------
+2. RAY INTERSECTION & SHADING LOOP
+--------------------------------------------------------------------------------
+File: src/raytracer_trace.cpp
+Function: cg::trace_ray()
+
+Path:
+- Calls `find_closest_hit(scene_data, ray_data)` to find the closest primitive intersection.
+- If a hit is found, calls `shade_hit()` to calculate the direct illumination.
+- Evaluates secondary rays for indirect illumination (Reflection / Refraction) and mixes them.
+
+--------------------------------------------------------------------------------
+3. DIRECT SHADING
+--------------------------------------------------------------------------------
+File: src/raytracer_trace.cpp
+Function: shade_hit()
+
+Path:
+- Resolves texture mapping, normal mapping, and metallic-roughness mapping using `apply_texture_and_normals()`.
+  - If a metallic-roughness map exists, it samples roughness from the Green (G) channel and metalness from the Blue (B) channel.
+- Scale ambient component by `(1.0 - metalness)` to shut down ambient lighting for conductors:
+  `result = material_shaded.ambient * (1.0 - material_shaded.metalness)`
+- Loops over all lights in `scene_data.lights`:
+  - Dispatches `get_shadow_info()` to check if the light source is occluded.
+  - Calls `is_occluded()` to trace a shadow ray.
+  - If not occluded, evaluates the light's contribution using a visitor that calls `phong_brdf()`.
+
+--------------------------------------------------------------------------------
+4. BRDF / LOCAL LIGHTING CALCULATION
+--------------------------------------------------------------------------------
+File: src/material.cpp
+Function: cg::phong_brdf()
+
+Formula:
+- Normal Vector (N): Normal at the hit point (safe normalized).
+- Light Vector (L): Direction from hit point to the light source.
+- View Vector (V): Direction from hit point to the camera/origin.
+- Reflection Vector (R): `glm::reflect(-L, N)`.
+- Lambertian component: `lambert = max(0.0, dot(N, L))`
+- Specular exponent: computed dynamically from material roughness using the Blinn-Phong conversion:
+  `active_shininess = 2.0 / (roughness^2 + 1e-4) - 2.0`
+  `exponent = max(1.0, active_shininess)`
+- Specular base component: `specular = max(0.0, dot(V, R)) ^ exponent`
+
+- Diffuse reflection scaling:scaled by `(1.0 - metalness)`
+  `active_diffuse = material.diffuse * (1.0 - metalness)`
+- Specular tinting: colored by base diffuse color for metals
+  `active_specular = glm::mix(material.specular, material.diffuse, metalness)`
+
+- Returns: `radiance * (active_diffuse * lambert + active_specular * specular)`
+
+--------------------------------------------------------------------------------
+5. INDIRECT LIGHTING (SECONDARY BOUNCES)
+--------------------------------------------------------------------------------
+File: src/raytracer_trace.cpp
+Function: cg::trace_ray() (Reflection and Refraction blocks)
+
+Paths:
+- Specular Reflection (Mirror / Metal):
+  - Ray casting occurs if the material is reflective or has non-zero metalness:
+    `active_reflectivity = max(material.reflectivity, metalness)`
+  - Specular tinting: colored by base diffuse color for metals
+    `active_specular = glm::mix(material.specular, material.diffuse, metalness)`
+  - Direction: `reflected_dir = glm::reflect(ray_data.dir, hit.normal)`
+  - Ray: `reflected_ray = { hit.p + bias * hit.normal, reflected_dir }`
+  - Radiance: Calls `trace_ray(reflected_ray, depth - 1)`
+  - The returned color is multiplied by `active_specular` and weighted by `active_reflectivity`.
+- Glass / Refraction:
+  - Computes Schlick's reflectance approximation `R = r0 + (1 - r0) * (1 - cos_theta)^5`.
+  - Traces reflection ray (tinted by `material.specular`) and refraction ray (`glm::refract`), mixing them according to `R`.
+- Combining Direct & Indirect:
+  - Blends direct and indirect colors: `glm::mix(direct_color, indirect_color, clamp(active_reflectivity, 0, 1))`.

@@ -8,15 +8,19 @@ import math.Interval;
 import math.Ray;
 import math.Vector3D;
 import objects.Object3D;
+import scene.Gamma;
 import scene.Light;
 import scene.Material;
+import scene.Texture;
 
 public class Raytracer {
-  private static final float SHADOW_BIAS = 1e-3f;
   final private RaytracerContext context;
+  final private Vector3D linearBg;
 
   public Raytracer(RaytracerContext context) {
     this.context = context;
+    java.awt.Color bg = context.getBgColor();
+    this.linearBg = new Vector3D(bg.getRed() / 255.99f, bg.getGreen() / 255.99f, bg.getBlue() / 255.99f);
   }
 
   public void run(String outputPath) {
@@ -35,7 +39,7 @@ public class Raytracer {
 
   private Color traceRay(Ray ray, int depth) {
     if (depth <= 0) {
-      return context.getBgColor();
+      return toColor(linearBg);
     }
     Intersection closestHit = null;
     Interval tRange = new Interval(this.context.getCamera().getNearPlane(), this.context.getCamera().getFarPlane());
@@ -48,14 +52,26 @@ public class Raytracer {
       }
     }
     if (closestHit == null) {
-      return context.getBgColor();
+      return toColor(linearBg);
     }
     return shadeHit(closestHit, ray.getDir().mul(-1f));
   }
 
   private static int toByte(float channel) {
     float clamped = Math.max(0f, Math.min(1f, channel));
-    return Math.round(clamped * 255f);
+    return (int) (clamped * 255.99f);
+  }
+
+  private static Vector3D safeNormalize(Vector3D v) {
+    if (v.lengthSquared() <= 1e-8f) {
+      return new Vector3D(0f, 0f, 0f);
+    }
+    return v.normalize();
+  }
+
+  private Color toColor(Vector3D linear) {
+    Vector3D encoded = Gamma.linearToSrgb(linear);
+    return new Color(toByte(encoded.getX()), toByte(encoded.getY()), toByte(encoded.getZ()));
   }
 
   private Color shadeHit(Intersection hit, Vector3D viewDir) {
@@ -64,29 +80,66 @@ public class Raytracer {
       throw new IllegalStateException("invalid material id " + materialId + " for hit event");
     }
     Material material = context.getScene().getMaterials().get(materialId);
+    Intersection shadedHit = hit;
+    Material shadedMaterial = material;
+    if (material.getTextureId() != null) {
+      int texId = material.getTextureId();
+      if (texId >= 0 && texId < context.getScene().getTextures().size()) {
+        Texture tex = context.getScene().getTextures().get(texId);
+        Vector3D texColor = tex.sample(hit.getUv());
+        shadedMaterial = new Material(
+            material.getAmbient().vec_mul(texColor),
+            material.getDiffuse().vec_mul(texColor),
+            material.getSpecular(),
+            material.getShininess(),
+            material.getTextureId(),
+            material.getNormalMapId());
+      }
+    }
+    if (material.getNormalMapId() != null) {
+      int mapId = material.getNormalMapId();
+      if (mapId >= 0 && mapId < context.getScene().getTextures().size()) {
+        Texture map = context.getScene().getTextures().get(mapId);
+        Vector3D normColor = map.sample(hit.getUv());
+        Vector3D mapN = new Vector3D(normColor.getX() * 2f - 1f, normColor.getY() * 2f - 1f,
+            normColor.getZ() * 2f - 1f);
 
-    Vector3D result = material.getAmbient();
+        Vector3D n = safeNormalize(hit.getNormal());
+        Vector3D dpdu = hit.getDpdu();
+        Vector3D dpdv = hit.getDpdv();
+        Vector3D t = safeNormalize(dpdu.sub(n.mul(n.dot(dpdu))));
+        Vector3D b = n.cross(t);
+        if (b.dot(dpdv) < 0f) {
+          b = b.mul(-1f);
+        }
+        Vector3D mappedNormal = safeNormalize(
+            t.mul(mapN.getX()).add(b.mul(mapN.getY())).add(n.mul(mapN.getZ())));
+        shadedHit = shadedHit.withNormal(mappedNormal);
+      }
+    }
+
+    Vector3D result = shadedMaterial.getAmbient();
     for (Light light : context.getScene().getLights()) {
-      if (isInShadow(light, hit)) {
+      if (isInShadow(light, shadedHit)) {
         continue;
       }
-      result = result.add(light.shade(material, hit, viewDir));
+      result = result.add(light.shade(shadedMaterial, shadedHit, viewDir));
     }
-    return new Color(toByte(result.getX()), toByte(result.getY()), toByte(result.getZ()));
+    return toColor(result);
   }
 
   private boolean isInShadow(Light light, Intersection hit) {
     Light.ShadowRay shadow = light.shadowRay(hit);
-    if (shadow.maxDistance() <= SHADOW_BIAS) {
+    if (shadow.maxDistance() <= Light.SHADOW_BIAS) {
       return false;
     }
     float maxDistance = Float.isInfinite(shadow.maxDistance())
         ? context.getCamera().getFarPlane()
-        : shadow.maxDistance() - SHADOW_BIAS;
-    if (maxDistance <= SHADOW_BIAS) {
+        : shadow.maxDistance() - Light.SHADOW_BIAS;
+    if (maxDistance <= Light.SHADOW_BIAS) {
       return false;
     }
-    Interval tRange = new Interval(SHADOW_BIAS, maxDistance);
+    Interval tRange = new Interval(Light.SHADOW_BIAS, maxDistance);
     for (Object3D obj : context.getScene().getObjects()) {
       if (obj.isHit(shadow.ray(), tRange).isPresent()) {
         return true;

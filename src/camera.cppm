@@ -4,6 +4,11 @@ import std;
 import ray;
 export namespace cg
 {
+template <typename T>
+concept ray_callback_t = requires(T fn) {
+    { fn(ray{vec3{0, 0, 0}, vec3{0, 0, 0}}, int{0}, int{0}) };
+};
+
 struct camera
 {
     int width{1280};
@@ -16,7 +21,7 @@ struct camera
     double near{0.001};
     vec3 screen_to_ndc(int x, int y) const;
     ray compute_ray(int x, int y, vec3 forward, vec3 right, vec3 upVec) const;
-    void cast_all_rays(std::function<void(ray, int, int)> ray_callback) const;
+    void cast_all_rays(const ray_callback_t auto& ray_callback) const;
 };
 
 vec3 camera::screen_to_ndc(int x, int y) const
@@ -40,8 +45,7 @@ ray camera::compute_ray(int sx, int sy, vec3 forward, vec3 right,
     return ray(pos, dir);
 }
 
-void camera::cast_all_rays(
-    std::function<void(ray, int, int)> ray_callback) const
+void camera::cast_all_rays(const ray_callback_t auto& ray_callback) const
 {
     const vec3 forward = glm::normalize(lookAt - pos);
     const vec3 right = glm::normalize(cross(forward, up));

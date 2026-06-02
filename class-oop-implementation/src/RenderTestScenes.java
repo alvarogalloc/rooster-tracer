@@ -45,12 +45,16 @@ public class RenderTestScenes {
     Path scenesDir = args.length >= 1 ? Path.of(args[0]) : Path.of(DEFAULT_SCENES_DIR);
     Path outputDir = args.length >= 2 ? Path.of(args[1]) : Path.of(DEFAULT_OUTPUT_DIR);
 
-    if (!Files.isDirectory(scenesDir)) {
-      throw new IllegalStateException("scenes directory not found: " + scenesDir.toAbsolutePath());
+    List<Path> scenes;
+    if (Files.isDirectory(scenesDir)) {
+      scenes = sceneFiles(scenesDir);
+    } else if (Files.isRegularFile(scenesDir) && scenesDir.toString().endsWith(".rscn")) {
+      scenes = List.of(scenesDir);
+    } else {
+      throw new IllegalStateException("scenes input path not found or not a valid .rscn file: " + scenesDir.toAbsolutePath());
     }
     Files.createDirectories(outputDir);
 
-    List<Path> scenes = sceneFiles(scenesDir);
     if (scenes.isEmpty()) {
       throw new IllegalStateException("no .rscn files found in: " + scenesDir.toAbsolutePath());
     }

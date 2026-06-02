@@ -9,6 +9,7 @@ import material;
 import light;
 import directional_light;
 import point_light;
+import texture;
 
 namespace cg
 {
@@ -37,12 +38,42 @@ void parse_material(std::istringstream& ss, scene& s)
 {
     // of the token "mat"
     //  albedo lambert color: just a color
-    // e.g. mat 255 0 0
+    // e.g. mat 255 0 0 [reflectivity] [transparency] [ior]
 
     const auto color = parse_color(ss);
-    s.materials.emplace_back(make_phong_material(color));
-    std::println("parsed material id={} rgb=({}, {}, {})",
-                 s.materials.size() - 1, color.x, color.y, color.z);
+    double reflectivity = 0.0;
+    double transparency = 0.0;
+    double ior = 1.0;
+    if (ss >> reflectivity)
+    {
+        if (ss >> transparency)
+        {
+            if (!(ss >> ior))
+            {
+                ior = 1.0;
+                ss.clear();
+            }
+        }
+        else
+        {
+            transparency = 0.0;
+            ss.clear();
+        }
+    }
+    else
+    {
+        reflectivity = 0.0;
+        ss.clear();
+    }
+    material m = make_phong_material(color);
+    m.reflectivity = reflectivity;
+    m.transparency = transparency;
+    m.ior = ior;
+    s.materials.emplace_back(m);
+    std::println("parsed material id={} rgb=({}, {}, {}) reflectivity={} "
+                 "transparency={} ior={}",
+                 s.materials.size() - 1, color.x, color.y, color.z,
+                 reflectivity, transparency, ior);
 }
 
 void parse_point_light(std::istringstream& ss, scene& s)
@@ -135,6 +166,22 @@ void parse_max_depth(std::istringstream& ss, scene& s)
     s.max_depth = static_cast<u32>(std::max(1, depth));
     std::println("parsed max_depth={}", s.max_depth);
 }
+
+void parse_hdr(std::istringstream& ss, scene& s)
+{
+    std::string path;
+    if (!(ss >> path))
+    {
+        std::println(std::cerr, "bad hdr (expected path)");
+        return;
+    }
+    std::filesystem::path full_path = path;
+    if (!full_path.is_absolute())
+        full_path = std::filesystem::path(s.source_dir) / path;
+    full_path = full_path.lexically_normal();
+    std::println("loading hdr: {}", full_path.string());
+    s.environment = load_hdr(full_path.string());
+}
 } // namespace parsers
 static const std::unordered_map<std::string,
                                 void (*)(std::istringstream&, scene&)>
@@ -151,10 +198,10 @@ static const std::unordered_map<std::string,
         {"fov", &parsers::parse_fov},
         {"background", &parsers::parse_background},
         {"max_depth", &parsers::parse_max_depth},
+        {"hdr", &parsers::parse_hdr},
     };
 scene parse_scene(const std::string& filepath)
 {
-
     constexpr static auto filetoken = "ROOSTERSCENEV1";
     std::println("parsing scene: {}", filepath);
     std::ifstream f{filepath};

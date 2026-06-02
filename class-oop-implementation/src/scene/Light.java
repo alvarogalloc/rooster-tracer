@@ -5,6 +5,8 @@ import math.Ray;
 import math.Vector3D;
 
 public interface Light {
+  float SHADOW_BIAS = 1e-5f;
+
   record ShadowRay(Ray ray, float maxDistance) {
   }
 

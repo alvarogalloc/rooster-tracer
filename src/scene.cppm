@@ -26,6 +26,7 @@ struct scene
     std::vector<vertex> vertices{};
     std::vector<triangle> mesh_triangles{};
     std::string source_dir{};
+    std::optional<texture> environment{};
     camera camera_data{};
     color_rgb background_color{color_rgb::from_rgb_256(10, 32, 90)};
     u32 max_depth{5};

@@ -11,12 +11,21 @@ public class Material {
   private final Vector3D diffuse;
   private final Vector3D specular;
   private final float shininess;
+  private final Integer textureId;
+  private final Integer normalMapId;
 
   public Material(Vector3D ambient, Vector3D diffuse, Vector3D specular, float shininess) {
+    this(ambient, diffuse, specular, shininess, null, null);
+  }
+
+  public Material(Vector3D ambient, Vector3D diffuse, Vector3D specular, float shininess, Integer textureId,
+      Integer normalMapId) {
     this.ambient = ambient;
     this.diffuse = diffuse;
     this.specular = specular;
     this.shininess = shininess;
+    this.textureId = textureId;
+    this.normalMapId = normalMapId;
   }
 
   public static Material fromAlbedo(Color color) {
@@ -45,6 +54,14 @@ public class Material {
 
   public float getShininess() {
     return shininess;
+  }
+
+  public Integer getTextureId() {
+    return textureId;
+  }
+
+  public Integer getNormalMapId() {
+    return normalMapId;
   }
 
   public boolean almostEquals(Material other) {

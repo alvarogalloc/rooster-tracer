@@ -39,7 +39,7 @@ public class DirectionalLight implements Light {
 
   @Override
   public ShadowRay shadowRay(Intersection hit) {
-    Vector3D origin = hit.getPoint().add(hit.getNormal().normalize().mul(1e-3f));
+    Vector3D origin = hit.getPoint().add(hit.getNormal().normalize().mul(Light.SHADOW_BIAS));
     Vector3D toLight = dir.mul(-1f);
     return new ShadowRay(new Ray(origin, toLight), Float.POSITIVE_INFINITY);
   }

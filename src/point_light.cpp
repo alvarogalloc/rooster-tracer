@@ -5,7 +5,7 @@ namespace cg
 [[nodiscard]] color_rgb shade_phong(const material& m, const hitevent& he,
                                     const point_light& l, vec3 view_dir)
 {
-    constexpr static double kMinDistanceSq = 1e-4f;
+    constexpr static double kMinDistanceSq = 1e-7f;
 
     const vec3 to_light = l.pos - he.p;
     const double dist_sq =

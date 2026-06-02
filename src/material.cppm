@@ -12,10 +12,16 @@ struct material
     color_rgb specular;
     color_rgb diffuse;
     double shininess;
+    double reflectivity{0.0};
+    double transparency{0.0};
+    double ior{1.0};
     std::optional<std::size_t> texture_id{};
     std::optional<std::size_t> normal_map_id{};
+    double metalness{0.0};
+    double roughness{0.5};
+    std::optional<std::size_t> metallic_roughness_map_id{};
 };
-constexpr double kDefaultShininess = 32.0;
+constexpr double kDefaultShininess = 10.0;
 constexpr double kDefaultAmbientFactor = 0.1;
 
 [[nodiscard]] material make_phong_material(

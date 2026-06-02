@@ -22,7 +22,32 @@ using namespace cg;
 
 namespace cg
 {
-[[nodiscard]] texture load_texture(const std::string& path)
+[[nodiscard]] texture load_hdr(const std::string& path)
+{
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+    stbi_set_flip_vertically_on_load(1);
+    float* data = stbi_loadf(path.c_str(), &width, &height, &channels, 3);
+    if (!data || width <= 0 || height <= 0)
+    {
+        throw std::runtime_error{std::format("hdr load failed: {}", path)};
+    }
+
+    const std::size_t pixel_count =
+        static_cast<std::size_t>(width) * static_cast<std::size_t>(height);
+    std::vector<color_rgb> pixels(pixel_count);
+    for (std::size_t i = 0; i < pixel_count; ++i)
+    {
+        const std::size_t base = i * 3;
+        pixels[i] = color_rgb{data[base], data[base + 1], data[base + 2]};
+    }
+    stbi_image_free(data);
+    return texture{
+        .width = width, .height = height, .pixels = std::move(pixels)};
+}
+
+[[nodiscard]] texture load_texture(const std::string& path, bool is_srgb)
 {
     int width = 0;
     int height = 0;
@@ -42,8 +67,8 @@ namespace cg
     for (std::size_t i = 0; i < pixel_count; ++i)
     {
         const std::size_t base = i * 3;
-        pixels[i] = color_rgb{srgb_to_linear(
-            inv * vec3{data[base], data[base + 1], data[base + 2]})};
+        const vec3 raw_val = inv * vec3{data[base], data[base + 1], data[base + 2]};
+        pixels[i] = color_rgb{is_srgb ? srgb_to_linear(raw_val) : raw_val};
     }
     stbi_image_free(data);
     return texture{

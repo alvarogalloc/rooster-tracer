@@ -23,26 +23,27 @@ public class Sphere implements Object3D {
 
   @Override
   public Optional<Intersection> isHit(Ray ray, Interval tRange) {
-    Vector3D oc = ray.getPos().add(center.mul(-1));
-    // general formula
+    Vector3D dirToSphere = center.sub(ray.getPos());
     float a = ray.getDir().dot(ray.getDir());
-    float b = 2.0f * oc.dot(ray.getDir());
-    float c = oc.dot(oc) - radius * radius;
-    float discriminant = b * b - 4 * a * c;
+    float h = ray.getDir().dot(dirToSphere);
+    float c = dirToSphere.dot(dirToSphere) - radius * radius;
 
-    // no solution in R
+    float discriminant = h * h - a * c;
     if (discriminant < 0) {
       return Optional.empty();
     }
 
-    // has roots
-    float t = (-b - (float) Math.sqrt(discriminant)) / (2.0f * a);
-    // no roots behind de camera
-    if (t <= 0 || !tRange.contains(t)) {
-      return Optional.empty();
+    float sqrtDiscriminant = (float) Math.sqrt(discriminant);
+    float t = (h - sqrtDiscriminant) / a;
+    if (t < 0 || !tRange.contains(t)) {
+      t = (h + sqrtDiscriminant) / a;
+      if (t < 0 || !tRange.contains(t)) {
+        return Optional.empty();
+      }
     }
+
     Vector3D hitPoint = ray.at(t);
-    Vector3D normal = hitPoint.add(center.mul(-1)).normalize();
+    Vector3D normal = hitPoint.sub(center).mul(1f / radius).normalize();
     if (normal.dot(ray.getDir()) > 0f) {
       normal = normal.mul(-1f);
     }

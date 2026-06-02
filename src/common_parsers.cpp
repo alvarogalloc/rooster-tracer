@@ -34,15 +34,21 @@ constexpr double kMaterialEqEps = 1e-8f;
     return same_color(a.ambient, b.ambient) &&
            same_color(a.specular, b.specular) &&
            same_color(a.diffuse, b.diffuse) &&
-           std::abs(a.shininess - b.shininess) <= kMaterialEqEps;
+           std::abs(a.shininess - b.shininess) <= kMaterialEqEps &&
+           std::abs(a.reflectivity - b.reflectivity) <= kMaterialEqEps &&
+           std::abs(a.transparency - b.transparency) <= kMaterialEqEps &&
+           std::abs(a.ior - b.ior) <= kMaterialEqEps;
 }
 } // namespace
 namespace parsers
 {
 
-std::size_t add_inline_material(scene& s, const color_rgb& albedo)
+std::size_t add_inline_material(scene& s, const color_rgb& albedo, double reflectivity = 0.0, double transparency = 0.0, double ior = 1.0)
 {
-    const material m = make_phong_material(albedo);
+    material m = make_phong_material(albedo);
+    m.reflectivity = reflectivity;
+    m.transparency = transparency;
+    m.ior = ior;
     const auto it = std::ranges::find_if(
         s.materials, [&](const material& c) { return same_material(c, m); });
     if (it != s.materials.cend())
@@ -78,10 +84,34 @@ void parse_sphere(std::istringstream& ss, scene& s)
     }
 
     const color_rgb col = parse_color(ss);
-    const auto material_id = add_inline_material(s, col);
+    double reflectivity = 0.0;
+    double transparency = 0.0;
+    double ior = 1.0;
+    if (ss >> reflectivity)
+    {
+        if (ss >> transparency)
+        {
+            if (!(ss >> ior))
+            {
+                ior = 1.0;
+                ss.clear();
+            }
+        }
+        else
+        {
+            transparency = 0.0;
+            ss.clear();
+        }
+    }
+    else
+    {
+        reflectivity = 0.0;
+        ss.clear();
+    }
+    const auto material_id = add_inline_material(s, col, reflectivity, transparency, ior);
     s.objects.push_back(sphere{radius, center, material_id});
-    std::println("parsed sphere center=({}, {}, {}) radius={} material={}",
-                 center.x, center.y, center.z, radius, material_id);
+    std::println("parsed sphere center=({}, {}, {}) radius={} material={} reflectivity={} transparency={} ior={}",
+                 center.x, center.y, center.z, radius, material_id, reflectivity, transparency, ior);
 }
 void parse_triangle(std::istringstream& ss, scene& s)
 {

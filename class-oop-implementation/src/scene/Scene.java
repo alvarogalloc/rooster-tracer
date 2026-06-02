@@ -22,6 +22,7 @@ public class Scene {
   private List<Object3D> objects;
   private List<Light> lights;
   private List<Material> materials;
+  private List<Texture> textures;
   private int imageWidth;
   private int imageHeight;
   private float fov;
@@ -43,11 +44,15 @@ public class Scene {
   public List<Material> getMaterials() {
     return materials;
   }
+  public List<Texture> getTextures() {
+    return textures;
+  }
 
   public Scene() {
     this.objects = new ArrayList<>();
     this.lights = new ArrayList<>();
     this.materials = new ArrayList<>();
+    this.textures = new ArrayList<>();
     this.imageWidth = DEFAULT_IMAGE_WIDTH;
     this.imageHeight = DEFAULT_IMAGE_HEIGHT;
     this.fov = DEFAULT_FOV;
@@ -69,6 +74,10 @@ public class Scene {
   }
   public void addMaterial(Material material) {
     this.materials.add(material);
+  }
+  public int addTexture(Texture texture) {
+    this.textures.add(texture);
+    return this.textures.size() - 1;
   }
 
   public int addInlineMaterial(Color color) {

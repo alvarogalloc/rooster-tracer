@@ -20,16 +20,17 @@ viewport <width> <height>
 fov      <degrees>
 camera   <px> <py> <pz>   <lx> <ly> <lz>   <ux> <uy> <uz>   <near> <far>
 background <R> <G> <B>
+hdr path/to/image.hdr
 max_depth  <integer>
 ```
 
-| Directive    | Description |
-|--------------|-------------|
-| `viewport`   | Output image resolution in pixels. |
-| `fov`        | Vertical field of view in degrees. |
+| Directive    | Description                                                  |
+| ------------ | ------------------------------------------------------------ |
+| `viewport`   | Output image resolution in pixels.                           |
+| `fov`        | Vertical field of view in degrees.                           |
 | `camera`     | Position, look-at point, up vector, near/far clip distances. |
-| `background` | Sky colour when no geometry is hit, in 0–255 RGB. |
-| `max_depth`  | Maximum ray bounce depth (1 = direct lighting only). |
+| `background` | Sky colour when no geometry is hit, in 0–255 RGB.            |
+| `max_depth`  | Maximum ray bounce depth (1 = direct lighting only).         |
 
 All positions and directions are in **Y-up, right-handed** world space
 (matching Blender's OBJ export with `-Z` forward / `Y` up).
@@ -39,7 +40,7 @@ All positions and directions are in **Y-up, right-handed** world space
 ## Materials (`mat`)
 
 ```
-mat <R> <G> <B>
+mat r g b [reflectivity] [transparency] [ior]
 ```
 
 - Appends one Phong material with the given diffuse colour (0–255 per channel).
@@ -60,11 +61,11 @@ dir_light   <dx> <dy> <dz>  <R> <G> <B>  <intensity>
 point_light <px> <py> <pz>  <R> <G> <B>  <intensity>
 ```
 
-| Parameter   | Description |
-|-------------|-------------|
-| `dx dy dz`  | Direction the light shines **toward** (normalised automatically). |
-| `px py pz`  | World-space position of the point light. |
-| `R G B`     | Light colour in 0–255. |
+| Parameter   | Description                                                               |
+| ----------- | ------------------------------------------------------------------------- |
+| `dx dy dz`  | Direction the light shines **toward** (normalised automatically).         |
+| `px py pz`  | World-space position of the point light.                                  |
+| `R G B`     | Light colour in 0–255.                                                    |
 | `intensity` | Scalar multiplier. Point-light radiance falls off as `intensity / dist²`. |
 
 > **`blend_to_rscn` note:** Blender light energy is divided by 100 to produce
@@ -105,32 +106,32 @@ References a material by its `mat` index.
 obj <path.obj>  [ox oy oz]  [material_id]
 ```
 
-| Argument      | Default | Description |
-|---------------|---------|-------------|
+| Argument      | Default | Description                                                                   |
+| ------------- | ------- | ----------------------------------------------------------------------------- |
 | `path.obj`    | —       | Path to the OBJ file. Relative paths are resolved from the `.rscn` directory. |
-| `ox oy oz`    | `0 0 0` | World-space translation added to every vertex. |
-| `material_id` | `0`     | Fallback `mat` index used for faces that carry no `usemtl`. |
+| `ox oy oz`    | `0 0 0` | World-space translation added to every vertex.                                |
+| `material_id` | `0`     | Fallback `mat` index used for faces that carry no `usemtl`.                   |
 
 #### MTL material pipeline
 
 When the OBJ file contains a `mtllib` directive, the referenced `.mtl` is
 parsed automatically. The following MTL fields are supported:
 
-| MTL field        | Effect |
-|------------------|--------|
-| `newmtl <name>`  | Begins a new named material. |
-| `Kd r g b`       | Diffuse colour (linear 0–1 floats). |
-| `Ks r g b`       | Specular colour. |
-| `Ka r g b`       | Ambient tint. **Blender always exports `Ka 1 1 1`**, so when all three channels are ≥ 0.99 the value is ignored and ambient is derived from `Kd × 0.1` instead. A non-white `Ka` is honoured but scaled by 0.1. |
-| `Ns value`       | Phong shininess exponent (0–1000). |
-| `Ke r g b`       | Emissive colour (parsed, reserved for future use). |
-| `d value`        | Dissolve/opacity (parsed, reserved). |
-| `Tr value`       | Transparency; stored as `d = 1 − Tr`. |
-| `illum model`    | Illumination model integer (parsed, reserved). |
-| `Ni value`       | Index of refraction (parsed, reserved). |
-| `map_Kd <file>`  | Diffuse texture; path relative to the `.mtl` file. Multiplied with `Kd`. |
-| `map_Ks <file>`  | Specular texture (parsed, reserved). |
-| `map_Bump`, `map_bump`, `bump`, `map_Kn`, `norm` | Normal/bump map; optional `-bm <scale>` prefix is consumed. |
+| MTL field                                        | Effect                                                                                                                                                                                                          |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `newmtl <name>`                                  | Begins a new named material.                                                                                                                                                                                    |
+| `Kd r g b`                                       | Diffuse colour (linear 0–1 floats).                                                                                                                                                                             |
+| `Ks r g b`                                       | Specular colour.                                                                                                                                                                                                |
+| `Ka r g b`                                       | Ambient tint. **Blender always exports `Ka 1 1 1`**, so when all three channels are ≥ 0.99 the value is ignored and ambient is derived from `Kd × 0.1` instead. A non-white `Ka` is honoured but scaled by 0.1. |
+| `Ns value`                                       | Phong shininess exponent (0–1000).                                                                                                                                                                              |
+| `Ke r g b`                                       | Emissive colour (parsed, reserved for future use).                                                                                                                                                              |
+| `d value`                                        | Dissolve/opacity (parsed, reserved).                                                                                                                                                                            |
+| `Tr value`                                       | Transparency; stored as `d = 1 − Tr`.                                                                                                                                                                           |
+| `illum model`                                    | Illumination model integer (parsed, reserved).                                                                                                                                                                  |
+| `Ni value`                                       | Index of refraction (parsed, reserved).                                                                                                                                                                         |
+| `map_Kd <file>`                                  | Diffuse texture; path relative to the `.mtl` file. Multiplied with `Kd`.                                                                                                                                        |
+| `map_Ks <file>`                                  | Specular texture (parsed, reserved).                                                                                                                                                                            |
+| `map_Bump`, `map_bump`, `bump`, `map_Kn`, `norm` | Normal/bump map; optional `-bm <scale>` prefix is consumed.                                                                                                                                                     |
 
 Each `usemtl <name>` in the OBJ face section switches the active material.
 MTL materials are appended to the scene material list after any `mat` entries
