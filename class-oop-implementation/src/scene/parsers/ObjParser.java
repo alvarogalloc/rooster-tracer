@@ -35,7 +35,9 @@ public class ObjParser {
         Vector3D specular;
         Float shininess;
         String diffuseMap;
+        Vector2D diffuseScale = new Vector2D(1f, 1f);
         String normalMap;
+        Vector2D normalScale = new Vector2D(1f, 1f);
     }
 
     private static final class FloatList {
@@ -385,16 +387,59 @@ public class ObjParser {
             currentMtl.shininess = parseFloatOptional(tokens);
         }
 
+        private static final class TextureMapInfo {
+            String filename;
+            Vector2D scale = new Vector2D(1f, 1f);
+        }
+
+        private TextureMapInfo parseTextureMap(String[] tokens) {
+            TextureMapInfo info = new TextureMapInfo();
+            int i = 1;
+            while (i < tokens.length) {
+                String token = tokens[i];
+                if (token.startsWith("-")) {
+                    if ("-s".equals(token) && i + 3 < tokens.length) {
+                        try {
+                            float sx = Float.parseFloat(tokens[i + 1]);
+                            float sy = Float.parseFloat(tokens[i + 2]);
+                            info.scale = new Vector2D(sx, sy);
+                        } catch (NumberFormatException e) {
+                            // ignore and fallback
+                        }
+                        i += 4;
+                    } else if (("-o".equals(token) || "-t".equals(token)) && i + 3 < tokens.length) {
+                        i += 4;
+                    } else if ("-mm".equals(token) && i + 2 < tokens.length) {
+                        i += 3;
+                    } else if (("-bm".equals(token) || "-clamp".equals(token) || "-cc".equals(token) ||
+                                "-blendu".equals(token) || "-blendv".equals(token) || "-boost".equals(token) ||
+                                "-imfchan".equals(token) || "-texres".equals(token)) && i + 1 < tokens.length) {
+                        i += 2;
+                    } else {
+                        i++;
+                    }
+                } else {
+                    StringBuilder sb = new StringBuilder(token);
+                    for (int j = i + 1; j < tokens.length; j++) {
+                        sb.append(" ").append(tokens[j]);
+                    }
+                    info.filename = sb.toString();
+                    break;
+                }
+            }
+            return info;
+        }
+
         private void handleMapKd(String[] tokens) {
-            currentMtl.diffuseMap = tokens.length > 1 ? tokens[1] : null;
+            TextureMapInfo info = parseTextureMap(tokens);
+            currentMtl.diffuseMap = info.filename;
+            currentMtl.diffuseScale = info.scale;
         }
 
         private void handleMapBump(String[] tokens) {
-            String mapPath = tokens.length > 1 ? tokens[1] : null;
-            if ("-bm".equals(mapPath) && tokens.length > 3) {
-                mapPath = tokens[3];
-            }
-            currentMtl.normalMap = mapPath;
+            TextureMapInfo info = parseTextureMap(tokens);
+            currentMtl.normalMap = info.filename;
+            currentMtl.normalScale = info.scale;
         }
 
         private void registerMtlMaterial() throws IOException {
@@ -430,7 +475,8 @@ public class ObjParser {
             Vector3D specular = currentMtl.specular != null ? currentMtl.specular : new Vector3D(0.5f, 0.5f, 0.5f);
             float shininess = currentMtl.shininess != null ? currentMtl.shininess : DEFAULT_SHININESS;
 
-            scene.addMaterial(new Material(ambient, diffuse, specular, shininess, textureId, normalMapId));
+            scene.addMaterial(new Material(ambient, diffuse, specular, shininess, textureId, normalMapId,
+                currentMtl.diffuseScale, currentMtl.normalScale));
             int id = scene.getMaterials().size() - 1;
             mtlIds.put(currentMtl.name, id);
             System.out.println("parsed mtl material name=" + currentMtl.name + " id=" + id);

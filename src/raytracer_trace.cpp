@@ -59,7 +59,7 @@ cg::material apply_texture_and_normals(const cg::scene& scene_data,
         if (texid >= scene_data.textures.size())
             return base;
         const cg::color_rgb tex_color =
-            cg::sample_texture(scene_data.textures.at(texid), hit.uv);
+            cg::sample_texture(scene_data.textures.at(texid), hit.uv * base.diffuse_scale);
         shaded.diffuse = cg::color_rgb{base.diffuse * tex_color};
         shaded.ambient = cg::color_rgb{base.ambient * tex_color};
     }
@@ -72,7 +72,7 @@ cg::material apply_texture_and_normals(const cg::scene& scene_data,
             return base;
 
         const cg::color_rgb norm_color =
-            cg::sample_texture(scene_data.textures.at(mapid), hit.uv);
+            cg::sample_texture(scene_data.textures.at(mapid), hit.uv * base.normal_scale);
 
         // Map [0, 1] to [-1, 1]
         vec3 map_n =
@@ -98,7 +98,7 @@ cg::material apply_texture_and_normals(const cg::scene& scene_data,
         if (mrid < scene_data.textures.size())
         {
             const cg::color_rgb mr_color =
-                cg::sample_texture(scene_data.textures.at(mrid), hit.uv);
+                cg::sample_texture(scene_data.textures.at(mrid), hit.uv * base.mr_scale);
             // Green channel contains roughness, blue channel contains
             // metalness.
             shaded.roughness = base.roughness * mr_color.y;

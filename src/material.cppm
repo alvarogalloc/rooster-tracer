@@ -20,6 +20,9 @@ struct material
     double metalness{0.0};
     double roughness{0.5};
     std::optional<std::size_t> metallic_roughness_map_id{};
+    vec2 diffuse_scale{1.0, 1.0};
+    vec2 normal_scale{1.0, 1.0};
+    vec2 mr_scale{1.0, 1.0};
 };
 constexpr double kDefaultShininess = 10.0;
 constexpr double kDefaultAmbientFactor = 0.1;

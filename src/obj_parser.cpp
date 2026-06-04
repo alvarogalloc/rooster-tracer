@@ -35,11 +35,14 @@ struct mtl_material
     std::optional<double> ior;
     std::optional<int> illum;
     std::optional<std::string> diffuse_map;
+    vec2 diffuse_scale{1.0, 1.0};
     std::optional<std::string> specular_map;
     std::optional<std::string> normal_map;
+    vec2 normal_scale{1.0, 1.0};
     std::optional<double> metalness;
     std::optional<double> roughness;
     std::optional<std::string> metallic_roughness_map;
+    vec2 mr_scale{1.0, 1.0};
 };
 
 struct mtl_state
@@ -214,6 +217,9 @@ using obj_handler_t = void (*)(std::istringstream&, obj_state&);
         .metalness = metalness,
         .roughness = roughness,
         .metallic_roughness_map_id = metallic_roughness_map_id,
+        .diffuse_scale = src.diffuse_scale,
+        .normal_scale = src.normal_scale,
+        .mr_scale = src.mr_scale,
     };
 }
 
@@ -339,34 +345,97 @@ void handle_ni(std::istringstream& ss, mtl_state& state)
     state.current.ior = parse_float_optional(ss);
 }
 
+struct texture_map_info
+{
+    std::string filename;
+    vec2 scale{1.0, 1.0};
+};
+
+[[nodiscard]] texture_map_info parse_texture_map(std::istringstream& ss)
+{
+    texture_map_info info;
+    std::string token;
+    while (ss >> token)
+    {
+        if (token.starts_with("-"))
+        {
+            if (token == "-s")
+            {
+                double sx = 1.0, sy = 1.0, sz = 1.0;
+                if (ss >> sx >> sy >> sz)
+                {
+                    info.scale = vec2(sx, sy);
+                }
+                else
+                {
+                    ss.clear();
+                }
+            }
+            else if (token == "-o" || token == "-t")
+            {
+                double ox, oy, oz;
+                if (!(ss >> ox >> oy >> oz)) ss.clear();
+            }
+            else if (token == "-mm")
+            {
+                double base, gain;
+                if (!(ss >> base >> gain)) ss.clear();
+            }
+            else if (token == "-bm" || token == "-clamp" || token == "-cc" ||
+                     token == "-blendu" || token == "-blendv" || token == "-boost" ||
+                     token == "-imfchan" || token == "-texres")
+            {
+                std::string arg;
+                if (!(ss >> arg)) ss.clear();
+            }
+        }
+        else
+        {
+            if (info.filename.empty())
+            {
+                info.filename = token;
+            }
+            else
+            {
+                info.filename += " " + token;
+            }
+            std::string rest;
+            if (std::getline(ss, rest))
+            {
+                info.filename += rest;
+                parse_utils::trim_line(info.filename);
+            }
+            break;
+        }
+    }
+    return info;
+}
+
 void handle_map_kd(std::istringstream& ss, mtl_state& state)
 {
-    std::string map_path;
-    ss >> map_path;
-    if (!map_path.empty())
-        state.current.diffuse_map = map_path;
+    auto info = parse_texture_map(ss);
+    if (!info.filename.empty())
+    {
+        state.current.diffuse_map = info.filename;
+        state.current.diffuse_scale = info.scale;
+    }
 }
 
 void handle_map_ks(std::istringstream& ss, mtl_state& state)
 {
-    std::string map_path;
-    ss >> map_path;
-    if (!map_path.empty())
-        state.current.specular_map = map_path;
+    auto info = parse_texture_map(ss);
+    if (!info.filename.empty())
+        state.current.specular_map = info.filename;
 }
 
 void handle_bump(std::istringstream& ss, mtl_state& state)
 {
-    std::string map_path;
-    ss >> map_path;
-    if (map_path == "-bm")
+    auto info = parse_texture_map(ss);
+    if (!info.filename.empty())
     {
-        double multiplier;
-        ss >> multiplier;
-        ss >> map_path;
+        state.current.normal_map = info.filename;
+        state.current.normal_scale = info.scale;
     }
-    if (!map_path.empty())
-        state.current.normal_map = map_path;
 }
 
 void handle_pm(std::istringstream& ss, mtl_state& state)
@@ -381,18 +450,22 @@ void handle_pr(std::istringstream& ss, mtl_state& state)
 
 void handle_map_pm(std::istringstream& ss, mtl_state& state)
 {
-    std::string map_path;
-    ss >> map_path;
-    if (!map_path.empty())
-        state.current.metallic_roughness_map = map_path;
+    auto info = parse_texture_map(ss);
+    if (!info.filename.empty())
+    {
+        state.current.metallic_roughness_map = info.filename;
+        state.current.mr_scale = info.scale;
+    }
 }
 
 void handle_map_pr(std::istringstream& ss, mtl_state& state)
 {
-    std::string map_path;
-    ss >> map_path;
-    if (!map_path.empty())
-        state.current.metallic_roughness_map = map_path;
+    auto info = parse_texture_map(ss);
+    if (!info.filename.empty())
+    {
+        state.current.metallic_roughness_map = info.filename;
+        state.current.mr_scale = info.scale;
+    }
 }
 
 static const std::unordered_map<std::string, mtl_handler_t>

@@ -86,21 +86,31 @@ public class Raytracer {
       int texId = material.getTextureId();
       if (texId >= 0 && texId < context.getScene().getTextures().size()) {
         Texture tex = context.getScene().getTextures().get(texId);
-        Vector3D texColor = tex.sample(hit.getUv());
+        math.Vector2D scaledUv = new math.Vector2D(
+            hit.getUv().getX() * material.getDiffuseScale().getX(),
+            hit.getUv().getY() * material.getDiffuseScale().getY()
+        );
+        Vector3D texColor = tex.sample(scaledUv);
         shadedMaterial = new Material(
             material.getAmbient().vec_mul(texColor),
             material.getDiffuse().vec_mul(texColor),
             material.getSpecular(),
             material.getShininess(),
             material.getTextureId(),
-            material.getNormalMapId());
+            material.getNormalMapId(),
+            material.getDiffuseScale(),
+            material.getNormalScale());
       }
     }
     if (material.getNormalMapId() != null) {
       int mapId = material.getNormalMapId();
       if (mapId >= 0 && mapId < context.getScene().getTextures().size()) {
         Texture map = context.getScene().getTextures().get(mapId);
-        Vector3D normColor = map.sample(hit.getUv());
+        math.Vector2D scaledNormalUv = new math.Vector2D(
+            hit.getUv().getX() * material.getNormalScale().getX(),
+            hit.getUv().getY() * material.getNormalScale().getY()
+        );
+        Vector3D normColor = map.sample(scaledNormalUv);
         Vector3D mapN = new Vector3D(normColor.getX() * 2f - 1f, normColor.getY() * 2f - 1f,
             normColor.getZ() * 2f - 1f);
 

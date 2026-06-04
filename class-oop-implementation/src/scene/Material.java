@@ -1,6 +1,7 @@
 package scene;
 
 import java.awt.Color;
+import math.Vector2D;
 import math.Vector3D;
 
 public class Material {
@@ -13,6 +14,8 @@ public class Material {
   private final float shininess;
   private final Integer textureId;
   private final Integer normalMapId;
+  private final Vector2D diffuseScale;
+  private final Vector2D normalScale;
 
   public Material(Vector3D ambient, Vector3D diffuse, Vector3D specular, float shininess) {
     this(ambient, diffuse, specular, shininess, null, null);
@@ -20,12 +23,19 @@ public class Material {
 
   public Material(Vector3D ambient, Vector3D diffuse, Vector3D specular, float shininess, Integer textureId,
       Integer normalMapId) {
+    this(ambient, diffuse, specular, shininess, textureId, normalMapId, new Vector2D(1f, 1f), new Vector2D(1f, 1f));
+  }
+
+  public Material(Vector3D ambient, Vector3D diffuse, Vector3D specular, float shininess, Integer textureId,
+      Integer normalMapId, Vector2D diffuseScale, Vector2D normalScale) {
     this.ambient = ambient;
     this.diffuse = diffuse;
     this.specular = specular;
     this.shininess = shininess;
     this.textureId = textureId;
     this.normalMapId = normalMapId;
+    this.diffuseScale = diffuseScale;
+    this.normalScale = normalScale;
   }
 
   public static Material fromAlbedo(Color color) {
@@ -62,6 +72,14 @@ public class Material {
 
   public Integer getNormalMapId() {
     return normalMapId;
+  }
+
+  public Vector2D getDiffuseScale() {
+    return diffuseScale;
+  }
+
+  public Vector2D getNormalScale() {
+    return normalScale;
   }
 
   public boolean almostEquals(Material other) {
