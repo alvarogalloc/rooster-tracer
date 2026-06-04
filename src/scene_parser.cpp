@@ -9,6 +9,8 @@ import material;
 import light;
 import directional_light;
 import point_light;
+import spot_light;
+import rect_light;
 import texture;
 
 namespace cg
@@ -78,19 +80,28 @@ void parse_material(std::istringstream& ss, scene& s)
 
 void parse_point_light(std::istringstream& ss, scene& s)
 {
-    // of the form point_light x y z r g b intensity
+    // of the form point_light x y z r g b intensity [radius] [samples]
     const auto pos = parse_vec3(ss);
     const auto color = parse_color(ss);
     double intensity = 1.;
+    double radius = 0.0;
+    int samples = 1;
     if (!(ss >> intensity))
     {
         std::println(std::cerr,
                      "bad point_light (missing intensity), using default 1.0");
         ss.clear();
     }
-    s.lights.push_back(point_light{pos, color, intensity});
-    std::println("parsed point_light pos=({}, {}, {}) intensity={}", pos.x,
-                 pos.y, pos.z, intensity);
+    else
+    {
+        if (!(ss >> radius >> samples))
+        {
+            ss.clear();
+        }
+    }
+    s.lights.push_back(point_light{pos, color, intensity, radius, samples});
+    std::println("parsed point_light pos=({}, {}, {}) intensity={} radius={} samples={}", pos.x,
+                 pos.y, pos.z, intensity, radius, samples);
 }
 
 void parse_viewport(std::istringstream& ss, scene& s)
@@ -182,6 +193,50 @@ void parse_hdr(std::istringstream& ss, scene& s)
     std::println("loading hdr: {}", full_path.string());
     s.environment = load_hdr(full_path.string());
 }
+
+void parse_spot_light(std::istringstream& ss, scene& s)
+{
+    const auto pos = parse_vec3(ss);
+    const auto dir = parse_vec3(ss);
+    const auto color = parse_color(ss);
+    double intensity = 1.0;
+    double angle = 45.0;
+    double radius = 0.0;
+    int samples = 1;
+    if (!(ss >> intensity >> angle))
+    {
+        std::println(std::cerr, "bad spot_light (missing intensity/angle), using defaults");
+        ss.clear();
+    }
+    else
+    {
+        if (!(ss >> radius >> samples))
+        {
+            ss.clear();
+        }
+    }
+    s.lights.push_back(spot_light{pos, dir, color, intensity, angle, radius, samples});
+    std::println("parsed spot_light pos=({}, {}, {}) dir=({}, {}, {}) intensity={} angle={} radius={} samples={}",
+                 pos.x, pos.y, pos.z, dir.x, dir.y, dir.z, intensity, angle, radius, samples);
+}
+
+void parse_rect_light(std::istringstream& ss, scene& s)
+{
+    const auto pos = parse_vec3(ss);
+    const auto u = parse_vec3(ss);
+    const auto v = parse_vec3(ss);
+    const auto color = parse_color(ss);
+    double intensity = 1.0;
+    int samples = 16;
+    if (!(ss >> intensity >> samples))
+    {
+        std::println(std::cerr, "bad rect_light (missing intensity/samples), using defaults");
+        ss.clear();
+    }
+    s.lights.push_back(rect_light{pos, u, v, color, intensity, samples});
+    std::println("parsed rect_light pos=({}, {}, {}) u=({}, {}, {}) v=({}, {}, {}) intensity={} samples={}",
+                 pos.x, pos.y, pos.z, u.x, u.y, u.z, v.x, v.y, v.z, intensity, samples);
+}
 } // namespace parsers
 static const std::unordered_map<std::string,
                                 void (*)(std::istringstream&, scene&)>
@@ -193,6 +248,8 @@ static const std::unordered_map<std::string,
         {"mat", &parsers::parse_material},
         {"dir_light", &parsers::parse_dir_light},
         {"point_light", &parsers::parse_point_light},
+        {"spot_light", &parsers::parse_spot_light},
+        {"rect_light", &parsers::parse_rect_light},
         {"viewport", &parsers::parse_viewport},
         {"camera", &parsers::parse_camera},
         {"fov", &parsers::parse_fov},

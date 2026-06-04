@@ -7,9 +7,9 @@ import scene.Scene;
 
 public class PointLightParser {
   public static void parsePointLight(Scene scene, String[] tokens) {
-    if (tokens.length != 8) {
+    if (tokens.length < 8) {
       System.err.println(
-          "Invalid point_light format. Expected: point_light <px> <py> <pz> <r> <g> <b> <intensity>");
+          "Invalid point_light format. Expected: point_light <px> <py> <pz> <r> <g> <b> <intensity> [<radius> <samples>]");
       return;
     }
 
@@ -21,7 +21,18 @@ public class PointLightParser {
       int g = Integer.parseInt(tokens[5]);
       int b = Integer.parseInt(tokens[6]);
       float intensity = Float.parseFloat(tokens[7]);
-      scene.addLight(new PointLight(new Vector3D(px, py, pz), new Color(r, g, b), intensity));
+
+      float radius = 0.0f;
+      if (tokens.length > 8) {
+        radius = Float.parseFloat(tokens[8]);
+      }
+
+      int samples = 1;
+      if (tokens.length > 9) {
+        samples = Integer.parseInt(tokens[9]);
+      }
+
+      scene.addLight(new PointLight(new Vector3D(px, py, pz), new Color(r, g, b), intensity, radius, samples));
     } catch (NumberFormatException e) {
       System.err.println("Error parsing point light: " + e.getMessage());
     }

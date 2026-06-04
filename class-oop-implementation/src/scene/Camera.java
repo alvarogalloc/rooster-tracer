@@ -54,13 +54,13 @@ public class Camera {
     final Vector3D right = forward.cross(up).normalize();
     final Vector3D upVec = right.cross(forward).normalize();
 
-    for (int y = 0; y < height; y++) {
+    java.util.stream.IntStream.range(0, height).parallel().forEach(y -> {
       for (int x = 0; x < width; x++) {
         // compute ray direction based on camera parameters
         final Ray ray = computeRay(x, y, forward, right, upVec);
         rayCallback.accept(ray, x, y);
       }
-    }
+    });
   }
 
   private record NdcCoords(float x, float y) {

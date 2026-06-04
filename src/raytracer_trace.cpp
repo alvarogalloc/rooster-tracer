@@ -6,6 +6,8 @@ import light;
 import directional_light;
 import variant_overload;
 import point_light;
+import spot_light;
+import rect_light;
 import material;
 import plane;
 import texture;
@@ -148,25 +150,172 @@ color_rgb shade_hit(const scene& scene_data, const hitevent& hit,
         material_shaded.ambient * (1.0 - material_shaded.metalness);
 
     constexpr static double kShadowBias = 1e-5;
-    const auto occlusion_visitor = overload{
-        [&](const auto& l) {
-            const auto [shadow_ray, shadow_range] =
-                get_shadow_info(l, hit, kShadowBias);
-            if (shadow_range.size() == 0.)
-                return false;
-            return is_occluded(scene_data, shadow_ray, shadow_range);
-        },
-    };
 
-    auto shade_fn = shade_visitor(hit, material_shaded, view_dir);
     for (const auto& light_data : scene_data.lights)
     {
-        const bool is_blocked = std::visit(occlusion_visitor, light_data);
+        result += std::visit(
+            overload{
+                [&](const rect_light& l) {
+                    color_rgb accumulated_contribution{0.0, 0.0, 0.0};
+                    std::uint32_t rng_state = static_cast<std::uint32_t>(
+                        std::abs(hit.p.x) * 1000.0 +
+                        std::abs(hit.p.y) * 100000.0 +
+                        std::abs(hit.p.z) * 10000000.0);
+                    if (rng_state == 0)
+                        rng_state = 1337;
+                    auto next_float = [&]() {
+                        rng_state = rng_state * 1664525u + 1013904223u;
+                        return (rng_state & 0xFFFFFFu) / 16777216.0f;
+                    };
 
-        if (is_blocked)
-            continue;
+                    for (int s = 0; s < l.samples; ++s)
+                    {
+                        double rand_u = next_float();
+                        double rand_v = next_float();
+                        vec3 sample_pos = l.pos + rand_u * l.u + rand_v * l.v;
 
-        result += std::visit(shade_fn, light_data);
+                        vec3 to_light = sample_pos - hit.p;
+                        double dist_sq = glm::dot(to_light, to_light);
+                        if (dist_sq < 1e-7)
+                            continue;
+                        double dist = glm::sqrt(dist_sq);
+                        vec3 light_dir = to_light / dist;
+
+                        // 1. Check occlusion
+                        const vec3 shadow_origin =
+                            hit.p + hit.normal * kShadowBias;
+                        const ray shadow_ray{shadow_origin, to_light};
+                        const interval shadow_range{kShadowBias,
+                                                    dist - kShadowBias};
+                        if (is_occluded(scene_data, shadow_ray, shadow_range))
+                            continue;
+
+                        // 2. Cosine at the light source
+                        double cos_light = glm::dot(-light_dir, l.normal);
+                        if (cos_light <= 0.0)
+                            continue;
+
+                        color_rgb radiance_sample = color_rgb{
+                            l.color * (l.intensity / dist_sq) * cos_light /
+                            static_cast<double>(l.samples)};
+                        accumulated_contribution +=
+                            phong_brdf(material_shaded, hit, to_light,
+                                       radiance_sample, view_dir);
+                    }
+                    return accumulated_contribution;
+                },
+                [&](const point_light& l) {
+                    if (l.radius <= 0.0 || l.samples <= 1)
+                    {
+                        const auto [shadow_ray, shadow_range] = get_shadow_info(l, hit, kShadowBias);
+                        if (shadow_range.size() > 0.0 && is_occluded(scene_data, shadow_ray, shadow_range))
+                        {
+                            return color_rgb{0.0, 0.0, 0.0};
+                        }
+                        return shade_phong(material_shaded, hit, l, view_dir);
+                    }
+
+                    color_rgb accumulated_contribution{0.0, 0.0, 0.0};
+                    std::uint32_t rng_state = static_cast<std::uint32_t>(std::abs(hit.p.x) * 1000.0 + std::abs(hit.p.y) * 100000.0 + std::abs(hit.p.z) * 10000000.0);
+                    if (rng_state == 0) rng_state = 1337;
+                    auto next_float = [&]() {
+                        rng_state = rng_state * 1664525u + 1013904223u;
+                        return (rng_state & 0xFFFFFFu) / 16777216.0f;
+                    };
+
+                    for (int s = 0; s < l.samples; ++s)
+                    {
+                        double u = next_float();
+                        double v = next_float();
+                        double theta = u * 2.0 * std::numbers::pi;
+                        double phi = std::acos(2.0 * v - 1.0);
+                        vec3 offset = vec3(std::sin(phi) * std::cos(theta), std::sin(phi) * std::sin(theta), std::cos(phi)) * l.radius;
+                        vec3 sample_pos = l.pos + offset;
+
+                        vec3 to_light = sample_pos - hit.p;
+                        double dist_sq = glm::dot(to_light, to_light);
+                        if (dist_sq < 1e-7) continue;
+                        double dist = glm::sqrt(dist_sq);
+
+                        // Check occlusion
+                        const vec3 shadow_origin = hit.p + hit.normal * kShadowBias;
+                        const ray shadow_ray{shadow_origin, to_light};
+                        const interval shadow_range{kShadowBias, dist - kShadowBias};
+                        if (is_occluded(scene_data, shadow_ray, shadow_range))
+                            continue;
+
+                        const color_rgb radiance = color_rgb{l.color * (l.intensity / dist_sq) / static_cast<double>(l.samples)};
+                        accumulated_contribution += phong_brdf(material_shaded, hit, to_light, radiance, view_dir);
+                    }
+                    return accumulated_contribution;
+                },
+                [&](const spot_light& l) {
+                    if (l.radius <= 0.0 || l.samples <= 1)
+                    {
+                        const auto [shadow_ray, shadow_range] = get_shadow_info(l, hit, kShadowBias);
+                        if (shadow_range.size() > 0.0 && is_occluded(scene_data, shadow_ray, shadow_range))
+                        {
+                            return color_rgb{0.0, 0.0, 0.0};
+                        }
+                        return shade_phong(material_shaded, hit, l, view_dir);
+                    }
+
+                    color_rgb accumulated_contribution{0.0, 0.0, 0.0};
+                    std::uint32_t rng_state = static_cast<std::uint32_t>(std::abs(hit.p.x) * 1000.0 + std::abs(hit.p.y) * 100000.0 + std::abs(hit.p.z) * 10000000.0);
+                    if (rng_state == 0) rng_state = 1337;
+                    auto next_float = [&]() {
+                        rng_state = rng_state * 1664525u + 1013904223u;
+                        return (rng_state & 0xFFFFFFu) / 16777216.0f;
+                    };
+
+                    for (int s = 0; s < l.samples; ++s)
+                    {
+                        double u = next_float();
+                        double v = next_float();
+                        double theta = u * 2.0 * std::numbers::pi;
+                        double phi = std::acos(2.0 * v - 1.0);
+                        vec3 offset = vec3(std::sin(phi) * std::cos(theta), std::sin(phi) * std::sin(theta), std::cos(phi)) * l.radius;
+                        vec3 sample_pos = l.pos + offset;
+
+                        vec3 to_light = sample_pos - hit.p;
+                        double dist_sq = glm::dot(to_light, to_light);
+                        if (dist_sq < 1e-7) continue;
+                        double dist = glm::sqrt(dist_sq);
+                        vec3 light_dir = to_light / dist;
+
+                        // Spotlight direction attenuation
+                        const double cos_theta = glm::dot(-light_dir, l.dir);
+                        double spot_attenuation = 0.0;
+                        if (cos_theta >= l.cos_angle)
+                        {
+                            spot_attenuation = 1.0;
+                        }
+                        if (spot_attenuation <= 0.0)
+                            continue;
+
+                        // Check occlusion
+                        const vec3 shadow_origin = hit.p + hit.normal * kShadowBias;
+                        const ray shadow_ray{shadow_origin, to_light};
+                        const interval shadow_range{kShadowBias, dist - kShadowBias};
+                        if (is_occluded(scene_data, shadow_ray, shadow_range))
+                            continue;
+
+                        const color_rgb radiance = color_rgb{l.color * (l.intensity / dist_sq) * spot_attenuation / static_cast<double>(l.samples)};
+                        accumulated_contribution += phong_brdf(material_shaded, hit, to_light, radiance, view_dir);
+                    }
+                    return accumulated_contribution;
+                },
+                [&](const auto& l) {
+                    const auto [shadow_ray, shadow_range] =
+                        get_shadow_info(l, hit, kShadowBias);
+                    if (shadow_range.size() > 0.0 &&
+                        is_occluded(scene_data, shadow_ray, shadow_range))
+                    {
+                        return color_rgb{0.0, 0.0, 0.0};
+                    }
+                    return shade_phong(material_shaded, hit, l, view_dir);
+                }},
+            light_data);
     }
     return result;
 }

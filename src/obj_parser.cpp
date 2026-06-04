@@ -245,68 +245,6 @@ void register_mtl_material(mtl_state& state)
         metallic_roughness_map_id =
             load_texture_id(state.s, state.texture_ids, path, false);
     }
-    else
-    {
-        // 1. Check if <material_name>_metallicRoughness.png exists in the same
-        // directory as the .mtl file
-        std::filesystem::path mtl_dir =
-            std::filesystem::path(state.filename).parent_path();
-        std::filesystem::path mr_file =
-            mtl_dir / (src.name + "_metallicRoughness.png");
-        if (std::filesystem::exists(mr_file))
-        {
-            metallic_roughness_map_id = load_texture_id(
-                state.s, state.texture_ids, mr_file.string(), false);
-        }
-        // 2. Try replacing keywords in the diffuse texture filepath if it
-        // exists
-        else if (src.diffuse_map)
-        {
-            std::string diff_path = *src.diffuse_map;
-            const std::vector<std::pair<std::string, std::string>> patterns = {
-                {"_baseColor", "_metallicRoughness"},
-                {"_diff_", "_arm_"},
-                {"_diff", "_arm"},
-                {"_diffuse", "_arm"},
-                {"_albedo", "_arm"},
-                {"_albedo", "_metallicRoughness"}};
-
-            for (const auto& [target, replacement] : patterns)
-            {
-                std::size_t pos = diff_path.find(target);
-                if (pos != std::string::npos)
-                {
-                    std::string mr_path = diff_path;
-                    mr_path.replace(pos, target.length(), replacement);
-                    const std::string full_mr_path =
-                        resolve_asset_path(mr_path, state.filename);
-                    if (std::filesystem::exists(full_mr_path))
-                    {
-                        metallic_roughness_map_id = load_texture_id(
-                            state.s, state.texture_ids, full_mr_path, false);
-                        break;
-                    }
-
-                    std::size_t ext_pos = mr_path.rfind('.');
-                    if (ext_pos != std::string::npos)
-                    {
-                        std::string mr_path_png = mr_path;
-                        mr_path_png.replace(
-                            ext_pos, mr_path_png.length() - ext_pos, ".png");
-                        const std::string full_mr_path_png =
-                            resolve_asset_path(mr_path_png, state.filename);
-                        if (std::filesystem::exists(full_mr_path_png))
-                        {
-                            metallic_roughness_map_id =
-                                load_texture_id(state.s, state.texture_ids,
-                                                full_mr_path_png, false);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
     state.s.materials.emplace_back(
         to_material(src, texture_id, normal_map_id, metallic_roughness_map_id));
     const std::size_t id = state.s.materials.size() - 1;

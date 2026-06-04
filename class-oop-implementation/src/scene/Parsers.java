@@ -15,6 +15,8 @@ import scene.parsers.SphereParser;
 import scene.parsers.TriangleParser;
 import scene.parsers.ObjParser;
 import scene.parsers.ViewportParser;
+import scene.parsers.SpotLightParser;
+import scene.parsers.RectLightParser;
 
 /**
  * Parsers
@@ -34,6 +36,8 @@ public class Parsers {
       Map.entry("mat", MaterialParser::parseMaterial),
       Map.entry("dir_light", DirectionalLightParser::parseDirectionalLight),
       Map.entry("point_light", PointLightParser::parsePointLight),
+      Map.entry("spot_light", SpotLightParser::parseSpotLight),
+      Map.entry("rect_light", RectLightParser::parseRectLight),
       Map.entry("viewport", ViewportParser::parseViewport),
       Map.entry("camera", CameraParser::parseCamera),
       Map.entry("fov", FovParser::parseFov),

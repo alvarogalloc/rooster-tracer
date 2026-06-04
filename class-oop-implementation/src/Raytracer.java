@@ -120,12 +120,229 @@ public class Raytracer {
 
     Vector3D result = shadedMaterial.getAmbient();
     for (Light light : context.getScene().getLights()) {
-      if (isInShadow(light, shadedHit)) {
-        continue;
+      if (light instanceof scene.RectLight rectLight) {
+        result = result.add(shadeRectLight(rectLight, shadedMaterial, shadedHit, viewDir));
+      } else if (light instanceof scene.PointLight pointLight && pointLight.getRadius() > 0.0f && pointLight.getSamples() > 1) {
+        result = result.add(shadePointLightSoft(pointLight, shadedMaterial, shadedHit, viewDir));
+      } else if (light instanceof scene.SpotLight spotLight && spotLight.getRadius() > 0.0f && spotLight.getSamples() > 1) {
+        result = result.add(shadeSpotLightSoft(spotLight, shadedMaterial, shadedHit, viewDir));
+      } else {
+        if (isInShadow(light, shadedHit)) {
+          continue;
+        }
+        result = result.add(light.shade(shadedMaterial, shadedHit, viewDir));
       }
-      result = result.add(light.shade(shadedMaterial, shadedHit, viewDir));
     }
     return toColor(result);
+  }
+
+  private static class SimpleRNG {
+    private long state;
+    public SimpleRNG(long seed) {
+      this.state = seed == 0 ? 1337 : seed;
+    }
+    public float nextFloat() {
+      state = (state * 1664525L + 1013904223L) & 0xFFFFFFFFL;
+      return (float) (state & 0xFFFFFFL) / 16777216.0f;
+    }
+  }
+
+  private Vector3D shadeRectLight(scene.RectLight l, Material material, Intersection hit, Vector3D viewDir) {
+    Vector3D accumulatedContribution = new Vector3D(0f, 0f, 0f);
+    long seed = (long) (Math.abs(hit.getPoint().getX()) * 1000.0
+        + Math.abs(hit.getPoint().getY()) * 100000.0
+        + Math.abs(hit.getPoint().getZ()) * 10000000.0);
+    SimpleRNG rng = new SimpleRNG(seed);
+
+    for (int s = 0; s < l.getSamples(); ++s) {
+      float randU = rng.nextFloat();
+      float randV = rng.nextFloat();
+      Vector3D samplePos = l.getPos().add(l.getU().mul(randU)).add(l.getV().mul(randV));
+
+      Vector3D toLight = samplePos.sub(hit.getPoint());
+      float distSq = toLight.lengthSquared();
+      if (distSq < 1e-7f) {
+        continue;
+      }
+      float dist = (float) Math.sqrt(distSq);
+      Vector3D lightDir = toLight.mul(1f / dist);
+
+      // 1. Check occlusion
+      Vector3D shadowOrigin = hit.getPoint().add(hit.getNormal().normalize().mul(Light.SHADOW_BIAS));
+      Ray shadowRay = new Ray(shadowOrigin, toLight);
+      
+      float maxDistance = dist - Light.SHADOW_BIAS;
+      boolean occluded = false;
+      if (maxDistance > Light.SHADOW_BIAS) {
+        Interval tRange = new Interval(Light.SHADOW_BIAS, maxDistance);
+        for (Object3D obj : context.getScene().getObjects()) {
+          if (obj.isHit(shadowRay, tRange).isPresent()) {
+            occluded = true;
+            break;
+          }
+        }
+      }
+      if (occluded) {
+        continue;
+      }
+
+      // 2. Cosine at the light source
+      float cosLight = lightDir.mul(-1f).dot(l.getNormal());
+      if (cosLight <= 0.0f) {
+        continue;
+      }
+
+      // 3. Shading (traditional Phong)
+      final Vector3D n = safeNormalize(hit.getNormal());
+      final Vector3D v = safeNormalize(viewDir);
+      final float lambert = Math.max(0f, n.dot(lightDir));
+      final Vector3D reflection = safeNormalize(lightDir.mul(-1f).sub(n.mul(2f * lightDir.mul(-1f).dot(n))));
+      final float specBase = Math.max(0f, v.dot(reflection));
+      final float specular = (float) Math.pow(specBase, Math.max(1f, material.getShininess()));
+
+      Vector3D radianceSample = l.getColor().mul((l.getIntensity() / distSq) * cosLight / (float) l.getSamples());
+      Vector3D shadeSample = radianceSample.vec_mul(
+          material.getDiffuse().mul(lambert).add(material.getSpecular().mul(specular))
+      );
+      accumulatedContribution = accumulatedContribution.add(shadeSample);
+    }
+    return accumulatedContribution;
+  }
+
+  private Vector3D shadePointLightSoft(scene.PointLight l, Material material, Intersection hit, Vector3D viewDir) {
+    Vector3D accumulatedContribution = new Vector3D(0f, 0f, 0f);
+    long seed = (long) (Math.abs(hit.getPoint().getX()) * 1000.0
+        + Math.abs(hit.getPoint().getY()) * 100000.0
+        + Math.abs(hit.getPoint().getZ()) * 10000000.0);
+    SimpleRNG rng = new SimpleRNG(seed);
+
+    for (int s = 0; s < l.getSamples(); ++s) {
+      float u = rng.nextFloat();
+      float v = rng.nextFloat();
+      float theta = u * 2f * (float) Math.PI;
+      float phi = (float) Math.acos(2f * v - 1f);
+      Vector3D offset = new Vector3D(
+          (float) (Math.sin(phi) * Math.cos(theta)),
+          (float) (Math.sin(phi) * Math.sin(theta)),
+          (float) Math.cos(phi)
+      ).mul(l.getRadius());
+      Vector3D samplePos = l.getPos().add(offset);
+
+      Vector3D toLight = samplePos.sub(hit.getPoint());
+      float distSq = toLight.lengthSquared();
+      if (distSq < 1e-7f) {
+        continue;
+      }
+      float dist = (float) Math.sqrt(distSq);
+      Vector3D lightDir = toLight.mul(1f / dist);
+
+      // Check occlusion
+      Vector3D shadowOrigin = hit.getPoint().add(hit.getNormal().normalize().mul(Light.SHADOW_BIAS));
+      Ray shadowRay = new Ray(shadowOrigin, toLight);
+      
+      float maxDistance = dist - Light.SHADOW_BIAS;
+      boolean occluded = false;
+      if (maxDistance > Light.SHADOW_BIAS) {
+        Interval tRange = new Interval(Light.SHADOW_BIAS, maxDistance);
+        for (Object3D obj : context.getScene().getObjects()) {
+          if (obj.isHit(shadowRay, tRange).isPresent()) {
+            occluded = true;
+            break;
+          }
+        }
+      }
+      if (occluded) {
+        continue;
+      }
+
+      // Shading (traditional Phong)
+      final Vector3D n = safeNormalize(hit.getNormal());
+      final Vector3D vVec = safeNormalize(viewDir);
+      final float lambert = Math.max(0f, n.dot(lightDir));
+      final Vector3D reflection = safeNormalize(lightDir.mul(-1f).sub(n.mul(2f * lightDir.mul(-1f).dot(n))));
+      final float specBase = Math.max(0f, vVec.dot(reflection));
+      final float specular = (float) Math.pow(specBase, Math.max(1f, material.getShininess()));
+
+      Vector3D radianceSample = l.getColor().mul((l.getIntensity() / distSq) / (float) l.getSamples());
+      Vector3D shadeSample = radianceSample.vec_mul(
+          material.getDiffuse().mul(lambert).add(material.getSpecular().mul(specular))
+      );
+      accumulatedContribution = accumulatedContribution.add(shadeSample);
+    }
+    return accumulatedContribution;
+  }
+
+  private Vector3D shadeSpotLightSoft(scene.SpotLight l, Material material, Intersection hit, Vector3D viewDir) {
+    Vector3D accumulatedContribution = new Vector3D(0f, 0f, 0f);
+    long seed = (long) (Math.abs(hit.getPoint().getX()) * 1000.0
+        + Math.abs(hit.getPoint().getY()) * 100000.0
+        + Math.abs(hit.getPoint().getZ()) * 10000000.0);
+    SimpleRNG rng = new SimpleRNG(seed);
+
+    for (int s = 0; s < l.getSamples(); ++s) {
+      float u = rng.nextFloat();
+      float v = rng.nextFloat();
+      float theta = u * 2f * (float) Math.PI;
+      float phi = (float) Math.acos(2f * v - 1f);
+      Vector3D offset = new Vector3D(
+          (float) (Math.sin(phi) * Math.cos(theta)),
+          (float) (Math.sin(phi) * Math.sin(theta)),
+          (float) Math.cos(phi)
+      ).mul(l.getRadius());
+      Vector3D samplePos = l.getPos().add(offset);
+
+      Vector3D toLight = samplePos.sub(hit.getPoint());
+      float distSq = toLight.lengthSquared();
+      if (distSq < 1e-7f) {
+        continue;
+      }
+      float dist = (float) Math.sqrt(distSq);
+      Vector3D lightDir = toLight.mul(1f / dist);
+
+      // Spotlight direction attenuation
+      float cosTheta = lightDir.mul(-1f).dot(l.getDir());
+      float spotAttenuation = 0.0f;
+      if (cosTheta >= l.getCosAngle()) {
+        spotAttenuation = 1.0f;
+      }
+      if (spotAttenuation <= 0.0f) {
+        continue;
+      }
+
+      // Check occlusion
+      Vector3D shadowOrigin = hit.getPoint().add(hit.getNormal().normalize().mul(Light.SHADOW_BIAS));
+      Ray shadowRay = new Ray(shadowOrigin, toLight);
+      
+      float maxDistance = dist - Light.SHADOW_BIAS;
+      boolean occluded = false;
+      if (maxDistance > Light.SHADOW_BIAS) {
+        Interval tRange = new Interval(Light.SHADOW_BIAS, maxDistance);
+        for (Object3D obj : context.getScene().getObjects()) {
+          if (obj.isHit(shadowRay, tRange).isPresent()) {
+            occluded = true;
+            break;
+          }
+        }
+      }
+      if (occluded) {
+        continue;
+      }
+
+      // Shading (traditional Phong)
+      final Vector3D n = safeNormalize(hit.getNormal());
+      final Vector3D vVec = safeNormalize(viewDir);
+      final float lambert = Math.max(0f, n.dot(lightDir));
+      final Vector3D reflection = safeNormalize(lightDir.mul(-1f).sub(n.mul(2f * lightDir.mul(-1f).dot(n))));
+      final float specBase = Math.max(0f, vVec.dot(reflection));
+      final float specular = (float) Math.pow(specBase, Math.max(1f, material.getShininess()));
+
+      Vector3D radianceSample = l.getColor().mul((l.getIntensity() / distSq) * spotAttenuation / (float) l.getSamples());
+      Vector3D shadeSample = radianceSample.vec_mul(
+          material.getDiffuse().mul(lambert).add(material.getSpecular().mul(specular))
+      );
+      accumulatedContribution = accumulatedContribution.add(shadeSample);
+    }
+    return accumulatedContribution;
   }
 
   private boolean isInShadow(Light light, Intersection hit) {

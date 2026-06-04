@@ -58,18 +58,27 @@ mat r g b [reflectivity] [transparency] [ior]
 
 ```
 dir_light   <dx> <dy> <dz>  <R> <G> <B>  <intensity>
-point_light <px> <py> <pz>  <R> <G> <B>  <intensity>
+point_light <px> <py> <pz>  <R> <G> <B>  <intensity>  [radius] [samples]
+spot_light  <px> <py> <pz>  <dx> <dy> <dz>  <R> <G> <B>  <intensity>  <angle> [radius] [samples]
+rect_light  <px> <py> <pz>  <ux> <uy> <uz>  <vx> <vy> <vz>  <R> <G> <B>  <intensity>  [samples]
 ```
 
 | Parameter   | Description                                                               |
 | ----------- | ------------------------------------------------------------------------- |
-| `dx dy dz`  | Direction the light shines **toward** (normalised automatically).         |
-| `px py pz`  | World-space position of the point light.                                  |
+| `dx dy dz`  | Direction the light shines **toward** or spotlight emission direction.     |
+| `px py pz`  | World-space position of the light (point, spot, or starting corner of area). |
+| `ux uy uz`  | Spanning vector for one edge of the rectangular area light.               |
+| `vx vy vz`  | Spanning vector for the adjacent edge of the rectangular area light.      |
 | `R G B`     | Light colour in 0–255.                                                    |
-| `intensity` | Scalar multiplier. Point-light radiance falls off as `intensity / dist²`. |
+| `intensity` | Scalar multiplier. Radiance falls off as `intensity / dist²`.              |
+| `angle`     | Spotlight total cone angle in degrees (fully dark outside this angle).    |
+| `radius`    | Optional source radius in world units (enables soft shadows if > 0.0).     |
+| `samples`   | Monte Carlo samples for soft shadows (default: 16 for area, 1 for others). |
 
 > **`blend_to_rscn` note:** Blender light energy is divided by 100 to produce
 > the `intensity` value. A Blender point light at 1000 W becomes `intensity 10`.
+> Spotlight `angle` is converted from Blender's `spot_size`.
+> Area light corners and spanning vectors `u` and `v` are automatically computed in Rooster world-space.
 
 ---
 

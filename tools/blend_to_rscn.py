@@ -414,12 +414,44 @@ for obj in scene.objects:
             "color":     [r_, g_, b_],
             "intensity": iv,
         })
-    elif light.type in ("POINT", "AREA", "SPOT"):
+    elif light.type == "POINT":
+        radius = float(getattr(light, "shadow_soft_size", 0.0))
         manifest["lights"].append({
             "type":      "point_light",
             "pos":       b2r(loc),
             "color":     [r_, g_, b_],
             "intensity": iv,
+            "radius":    radius,
+            "samples":   16 if radius > 0.0 else 1,
+        })
+    elif light.type == "SPOT":
+        fwd = obj.matrix_world.to_quaternion() @ mathutils.Vector((0, 0, -1))
+        angle = math.degrees(light.spot_size)
+        radius = float(getattr(light, "shadow_soft_size", 0.0))
+        manifest["lights"].append({
+            "type":       "spot_light",
+            "pos":        b2r(loc),
+            "dir":        b2r(fwd),
+            "color":      [r_, g_, b_],
+            "intensity":  iv,
+            "angle":      angle,
+            "radius":     radius,
+            "samples":    16 if radius > 0.0 else 1,
+        })
+    elif light.type == "AREA":
+        size_x = light.size
+        size_y = light.size_y if light.shape == "RECTANGLE" else light.size
+        u_world = obj.matrix_world.to_quaternion() @ mathutils.Vector((size_x, 0.0, 0.0))
+        v_world = obj.matrix_world.to_quaternion() @ mathutils.Vector((0.0, size_y, 0.0))
+        corner = loc - 0.5 * u_world - 0.5 * v_world
+        manifest["lights"].append({
+            "type":      "rect_light",
+            "pos":       b2r(corner),
+            "u":         b2r(u_world),
+            "v":         b2r(v_world),
+            "color":     [r_, g_, b_],
+            "intensity": iv,
+            "samples":   16,
         })
 
 if not manifest["lights"]:
@@ -585,7 +617,19 @@ def build_rscn(manifest: dict, assets_dir: Path, output_rscn: Path) -> None:
         if light["type"] == "dir_light":
             lines.append(f"dir_light {_f3(light['dir'])} {_i3(c)} {iv:.2f}")
         elif light["type"] == "point_light":
-            lines.append(f"point_light {_f3(light['pos'])} {_i3(c)} {iv:.2f}")
+            radius = light.get("radius", 0.0)
+            if radius > 0.0:
+                lines.append(f"point_light {_f3(light['pos'])} {_i3(c)} {iv:.2f} {radius:.4f} {light['samples']}")
+            else:
+                lines.append(f"point_light {_f3(light['pos'])} {_i3(c)} {iv:.2f}")
+        elif light["type"] == "spot_light":
+            radius = light.get("radius", 0.0)
+            if radius > 0.0:
+                lines.append(f"spot_light {_f3(light['pos'])} {_f3(light['dir'])} {_i3(c)} {iv:.2f} {light['angle']:.2f} {radius:.4f} {light['samples']}")
+            else:
+                lines.append(f"spot_light {_f3(light['pos'])} {_f3(light['dir'])} {_i3(c)} {iv:.2f} {light['angle']:.2f}")
+        elif light["type"] == "rect_light":
+            lines.append(f"rect_light {_f3(light['pos'])} {_f3(light['u'])} {_f3(light['v'])} {_i3(c)} {iv:.2f} {light['samples']}")
     lines.append("")
 
     rscn_dir = output_rscn.parent.resolve()
